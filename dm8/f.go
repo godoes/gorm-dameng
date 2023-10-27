@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2000-2018, 达梦数据库有限公司.
+ * All rights reserved.
+ */
+
+package dm8
+
+import (
+	"bytes"
+	"compress/zlib"
+	"io"
+
+	"github.com/golang/snappy"
+)
+
+func Compress(srcBuffer *Dm_build_78, offset int, length int, compressID int) ([]byte, error) {
+	if compressID == Dm_build_775 {
+		return snappy.Encode(nil, srcBuffer.Dm_build_372(offset, length)), nil
+	}
+	return GzlibCompress(srcBuffer, offset, length)
+}
+
+func UnCompress(srcBytes []byte, compressID int) ([]byte, error) {
+	if compressID == Dm_build_775 {
+		return snappy.Decode(nil, srcBytes)
+	}
+	return GzlibUncompress(srcBytes)
+}
+
+func GzlibCompress(srcBuffer *Dm_build_78, offset int, length int) ([]byte, error) {
+	var ret bytes.Buffer
+	var w = zlib.NewWriter(&ret)
+	_, _ = w.Write(srcBuffer.Dm_build_372(offset, length))
+	_ = w.Close()
+	return ret.Bytes(), nil
+}
+
+func GzlibUncompress(srcBytes []byte) ([]byte, error) {
+	var bytesBuf = new(bytes.Buffer)
+	r, err := zlib.NewReader(bytes.NewReader(srcBytes))
+	if err != nil {
+		return nil, err
+	}
+	defer func(r io.ReadCloser) {
+		_ = r.Close()
+	}(r)
+	_, err = bytesBuf.ReadFrom(r)
+	if err != nil {
+		return nil, err
+	}
+	return bytesBuf.Bytes(), nil
+}
