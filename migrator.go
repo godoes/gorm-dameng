@@ -27,9 +27,10 @@ func (m Migrator) CurrentDatabase() (name string) {
 func (m Migrator) FullDataTypeOf(field *schema.Field) clause.Expr {
 	expr := m.Migrator.FullDataTypeOf(field)
 
-	if value, ok := field.TagSettings["COMMENT"]; ok {
-		expr.SQL += " COMMENT " + m.Dialector.Explain("?", value)
-	}
+	// https://eco.dameng.com/community/question/2966fa8cdb97f9444dd80afb78d7c9a6
+	//if value, ok := field.TagSettings["COMMENT"]; ok {
+	//	expr.SQL += " COMMENT " + m.Dialector.Explain("?", value)
+	//}
 
 	return expr
 }
