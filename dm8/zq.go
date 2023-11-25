@@ -285,6 +285,9 @@ const (
 	Dm_build_815 = 4
 )
 
+// fix: failed to build for windows_386: 0xffffffff (untyped int constant 4294967295) overflows int
+var maxValue uint32 = 0xffffffff
+
 var Dm_build_816 = [8][256]uint32{
 
 	{0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535,
@@ -930,7 +933,7 @@ func (dm_build_926 *Dm_build_918) dm_build_819() error {
 		} else {
 			var dataBytes = param.bytes[:len(param.bytes)]
 			if len(dataBytes) > int(Dm_build_739) {
-				if dm_build_926.dm_build_834.dm_build_418.MsgVersion >= Dm_build_693 && len(dataBytes) < 0xffffffff &&
+				if dm_build_926.dm_build_834.dm_build_418.MsgVersion >= Dm_build_693 && len(dataBytes) < int(maxValue) &&
 					isComplexType(param.tp, param.scale) {
 					dm_build_926.dm_build_834.dm_build_417.Dm_build_141(uint16(Dm_build_743))
 					dm_build_926.dm_build_834.dm_build_417.Dm_build_165(dataBytes)
@@ -1203,7 +1206,7 @@ func (dm_build_970 *dm_build_941) dm_build_969(dm_build_971 []interface{}) error
 			case []byte:
 				if dataBytes, ok := dm_build_971[i].([]byte); ok {
 					if len(dataBytes) > int(Dm_build_739) {
-						if dm_build_970.dm_build_834.dm_build_418.MsgVersion >= Dm_build_693 && len(dataBytes) < 0xffffffff &&
+						if dm_build_970.dm_build_834.dm_build_418.MsgVersion >= Dm_build_693 && len(dataBytes) < int(maxValue) &&
 							isComplexType(int(dm_build_970.dm_build_943[i].colType), int(dm_build_970.dm_build_943[i].scale)) {
 							dm_build_970.dm_build_834.dm_build_417.Dm_build_141(uint16(Dm_build_743))
 							dm_build_970.dm_build_834.dm_build_417.Dm_build_165(dataBytes)
