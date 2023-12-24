@@ -39,9 +39,10 @@ func (m Migrator) AutoMigrate(dst ...interface{}) error {
 		}
 		for i := 0; i < len(dst) && i < len(comments); i++ {
 			value := dst[i]
+			tx := m.DB.Session(&gorm.Session{})
 			comment := strings.ReplaceAll(comments[i], "'", "''")
 			if err := m.RunWithValue(value, func(stmt *gorm.Statement) error {
-				return m.DB.Exec(fmt.Sprintf("COMMENT ON TABLE ? IS '%s'", comment), m.CurrentTable(stmt)).Error
+				return tx.Exec(fmt.Sprintf("COMMENT ON TABLE ? IS '%s'", comment), m.CurrentTable(stmt)).Error
 			}); err != nil {
 				return err
 			}
