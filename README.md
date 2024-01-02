@@ -6,7 +6,7 @@
 
 ## 最低要求
 
-- go 1.17：<https://go.dev/dl/>
+- go 1.18：<https://go.dev/dl/>
 - gorm v2：<https://github.com/go-gorm/gorm>
 - 达梦数据库 DM8：<https://eco.dameng.com/download/>
 
@@ -40,6 +40,9 @@ func main() {
 
 	// dm://user:password@host:port?schema=SYSDBA[&...]
 	dsn := dameng.BuildUrl("user", "password", "127.0.0.1", 5236, options)
+	// VARCHAR 类型大小为字符长度
+	//db, err := gorm.Open(dameng.New(dameng.Config{DSN: dsn, VarcharSizeIsCharLength: true}))
+	// VARCHAR 类型大小为字节长度（默认）
 	db, err := gorm.Open(dameng.Open(dsn), &gorm.Config{})
 	if err != nil {
 		// panic error or log error info
