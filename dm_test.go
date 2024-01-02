@@ -3,6 +3,8 @@ package dameng
 import (
 	"bytes"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 func TestDialector_QuoteTo(t *testing.T) {
@@ -56,5 +58,44 @@ func BenchmarkDialector_QuoteTo(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		dialector.QuoteTo(buf, "database.table`User")
 		buf.Reset()
+	}
+}
+
+func TestNew(t *testing.T) {
+	testWaitInit()
+	type args struct {
+		config Config
+	}
+	options := map[string]string{
+		"schema":         dmSchema,
+		"appName":        "dm_TestNew",
+		"connectTimeout": "30000",
+	}
+
+	tests := []struct {
+		name string
+		args args
+		//want gorm.Dialector
+	}{
+		{"TestNew", args{Config{
+			DriverName:              DriverName,
+			DSN:                     BuildUrl(dmUsername, dmPassword, dmHost, dmPort, options),
+			VarcharSizeIsCharLength: true,
+		}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDB, gotErr := gorm.Open(New(tt.args.config))
+			if gotErr != nil {
+				t.Errorf("New() got error: %v", gotErr)
+			}
+			var version string
+			gotErr = gotDB.Raw("SELECT BANNER FROM V$VERSION WHERE BANNER LIKE 'DB Version:%'").Row().Scan(&version)
+			if gotErr == nil {
+				t.Log("DM Version:", version)
+			} else {
+				t.Errorf("Scan() got error: %v", gotErr)
+			}
+		})
 	}
 }

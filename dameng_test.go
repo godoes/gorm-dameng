@@ -4,7 +4,9 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/godoes/gorm-dameng/dm8"
 	"gorm.io/gorm"
@@ -18,6 +20,8 @@ var (
 	dmPort int
 
 	dmSchema string
+
+	waitOnce sync.Once
 )
 
 func init() {
@@ -48,13 +52,29 @@ func init() {
 		dmUsername, dmPassword, dmHost, dmPort)
 }
 
+func testWaitInit() {
+	waitOnce.Do(func() {
+		if wait := os.Getenv("WAIT_MIN"); wait != "" {
+			if min, e := strconv.Atoi(wait); e == nil {
+				log.Println("wait for dm database initialization to complete...")
+				time.Sleep(time.Duration(min) * time.Minute)
+			}
+		}
+	})
+}
+
 type Product struct {
 	gorm.Model
 	Code  string
 	Price uint
+
+	Remark  string `gorm:"column:remark;size:0"`
+	Remark1 string `gorm:"column:remark_1;size:-1"`
+	Remark2 string `gorm:"column:remark_2;size:32768"`
 }
 
 func TestGormConnExample(t *testing.T) {
+	testWaitInit()
 	options := map[string]string{
 		"schema":         dmSchema,
 		"appName":        "GORM 连接操作达梦数据库测试",
@@ -65,7 +85,8 @@ func TestGormConnExample(t *testing.T) {
 	t.Logf("连接地址： %s", dsn)
 
 	// 参考链接： https://eco.dameng.com/document/dm/zh-cn/pm/go-rogramming-guide.html#11.8%20ORM%20%E6%96%B9%E8%A8%80%E5%8C%85
-	db, err := gorm.Open(Open(dsn), &gorm.Config{})
+	dialector := New(Config{DSN: dsn, VarcharSizeIsCharLength: true})
+	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
 		t.Fatalf("连接数据库 [%s@%s:%d] 失败：%v", dmUsername, dmHost, dmPort, err)
 	} else {
@@ -80,7 +101,7 @@ func TestGormConnExample(t *testing.T) {
 	}
 
 	// Create
-	db.Create(&Product{Code: "D42", Price: 100})
+	db.Create(&Product{Code: "D42", Price: 100, Remark1: "VARCHAR", Remark2: "CLOB"})
 	if err = db.Error; err != nil {
 		t.Errorf("创建数据失败：%v", err)
 	} else {
@@ -89,26 +110,25 @@ func TestGormConnExample(t *testing.T) {
 
 	// Read
 	var product Product
-	db.First(&product, 1) // 根据整型主键查找
-	if err = db.Error; err != nil {
+	// 根据整型主键查找
+	if err = db.First(&product, 1).Error; err != nil {
 		t.Errorf("根据 ID 获取数据失败：%v", err)
 	} else {
-		t.Log("根据 ID 获取数据成功！")
+		t.Logf("根据 ID 获取数据成功！\n%+v", product)
 	}
 
 	// 若 创建数据库 初始化参数 时选中了“字符串比较大小写敏感”，则查询时 SQL 字段名要加双引号，
 	// 可通过 SELECT CASE_SENSITIVE() 查询数据库是否启用了大小写敏感，若未启用则引号可加可不加。
 	// 参考链接： https://eco.dameng.com/community/article/a9a9fab6fc1b86483e82317d1ccc1acb
-	db.First(&product, `"code" = ?`, "D42") // 查找 code 字段值为 D42 的记录
-	if err = db.Error; err != nil {
+	// 查找 code 字段值为 D42 的记录
+	if err = db.First(&product, `"code" = ?`, "D42").Error; err != nil {
 		t.Errorf("获取数据失败：%v", err)
 	} else {
-		t.Log("获取数据数据成功！")
+		t.Logf("获取数据数据成功！\n%+v", product)
 	}
 
 	// Update - 将 product 的 price 更新为 200
-	db.Model(&product).Update("Price", 200)
-	if err = db.Error; err != nil {
+	if err = db.Model(&product).Update("Price", 200).Error; err != nil {
 		t.Errorf("根据列名更新单个字段失败：%v", err)
 	} else {
 		t.Log("根据列名更新单个字段成功！")
@@ -136,7 +156,7 @@ func TestGormConnExample(t *testing.T) {
 	}
 
 	//goland:noinspection SqlNoDataSourceInspection
-	db.Exec(`DROP table "products"`)
+	//db.Exec(`DROP table "products"`)
 	if err = db.Error; err != nil {
 		t.Errorf("删除表结构失败：%v", err)
 	} else {

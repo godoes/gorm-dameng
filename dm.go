@@ -18,6 +18,8 @@ type Config struct {
 	DSN               string
 	Conn              gorm.ConnPool
 	DefaultStringSize uint
+
+	VarcharSizeIsCharLength bool // VARCHAR 类型大小是否为字符长度（默认为字节长度）
 }
 
 type Dialector struct {
@@ -228,12 +230,19 @@ func (d Dialector) getSchemaStringType(field *schema.Field) string {
 		}
 	}
 
-	if size <= 0 {
-		return "VARCHAR"
-	} else if size >= 32768 {
-		return "CLOB"
+	if size > 0 && size < 32768 {
+		// VARCHAR 可以指定一个不超过 32767 的正整数作为字节或字符长度
+		if d.VarcharSizeIsCharLength {
+			return fmt.Sprintf("VARCHAR(%d CHAR)", size) // 字符长度（size * 4）
+		}
+		return fmt.Sprintf("VARCHAR(%d)", size) // 字节长度
+	} else if size == 0 {
+		if d.VarcharSizeIsCharLength {
+			return "VARCHAR(8188 CHAR)" // 字符长度（8188 * 4）
+		}
+		return "VARCHAR" // 如果未指定长度，缺省为 8188 字节
 	} else {
-		return fmt.Sprintf("VARCHAR(%d)", size)
+		return "CLOB" // 长度超过 32767，使用 CLOB（TEXT）
 	}
 }
 
