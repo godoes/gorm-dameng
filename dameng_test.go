@@ -101,17 +101,18 @@ func TestGormConnExample(t *testing.T) {
 	}
 
 	// Create
-	db.Create(&Product{Code: "D42", Price: 100, Remark1: "VARCHAR", Remark2: "CLOB"})
+	data := Product{Code: "D42", Price: 100, Remark1: "VARCHAR", Remark2: "CLOB"}
+	db.Create(&data)
 	if err = db.Error; err != nil {
 		t.Errorf("创建数据失败：%v", err)
 	} else {
-		t.Log("创建数据成功！")
+		t.Logf("创建数据成功！数据 ID：%d", data.ID)
 	}
 
 	// Read
 	var product Product
 	// 根据整型主键查找
-	if err = db.First(&product, 1).Error; err != nil {
+	if err = db.First(&product, data.ID).Error; err != nil {
 		t.Errorf("根据 ID 获取数据失败：%v", err)
 	} else {
 		t.Logf("根据 ID 获取数据成功！\n%+v", product)
