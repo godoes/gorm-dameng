@@ -14,14 +14,14 @@ import (
 	"github.com/godoes/gorm-dameng/dm8/util"
 )
 
-func (conn *DmConnection) lex(sql string) ([]*parser.LVal, error) {
-	if conn.lexer == nil {
-		conn.lexer = parser.NewLexer(strings.NewReader(sql), false)
+func (dc *DmConnection) lex(sql string) ([]*parser.LVal, error) {
+	if dc.lexer == nil {
+		dc.lexer = parser.NewLexer(strings.NewReader(sql), false)
 	} else {
-		conn.lexer.Reset(strings.NewReader(sql))
+		dc.lexer.Reset(strings.NewReader(sql))
 	}
 
-	lexer := conn.lexer
+	lexer := dc.lexer
 	var lval *parser.LVal
 	var err error
 	lvalList := make([]*parser.LVal, 0, 64)
@@ -71,7 +71,7 @@ func lexSkipWhitespace(sql string, n int) ([]*parser.LVal, error) {
 	return lvalList, nil
 }
 
-func (conn *DmConnection) escape(sql string, keywords []string) (string, error) {
+func (dc *DmConnection) escape(sql string, keywords []string) (string, error) {
 
 	if (keywords == nil || len(keywords) == 0) && strings.Index(sql, "{") == -1 {
 		return sql, nil
@@ -85,7 +85,7 @@ func (conn *DmConnection) escape(sql string, keywords []string) (string, error) 
 	}
 	nsql := bytes.NewBufferString("")
 	stack := make([]bool, 0, 64)
-	lvalList, err := conn.lex(sql)
+	lvalList, err := dc.lex(sql)
 	if err != nil {
 		return "", err
 	}
@@ -183,10 +183,10 @@ func next(lvalList []*parser.LVal, start int) *parser.LVal {
 	return lval
 }
 
-func (conn *DmConnection) execOpt(sql string, optParamList []OptParameter, serverEncoding string) (string, []OptParameter, error) {
+func (dc *DmConnection) execOpt(sql string, optParamList []OptParameter, serverEncoding string) (string, []OptParameter, error) {
 	nsql := bytes.NewBufferString("")
 
-	lvalList, err := conn.lex(sql)
+	lvalList, err := dc.lex(sql)
 	if err != nil {
 		return "", optParamList, err
 	}
@@ -201,7 +201,7 @@ func (conn *DmConnection) execOpt(sql string, optParamList []OptParameter, serve
 		return sql, optParamList, nil
 	}
 
-	breakIndex := 0
+	//breakIndex := 0
 	for i := 0; i < len(lvalList); i++ {
 		lval := lvalList[i]
 		switch lval.Tp {
@@ -252,7 +252,7 @@ func (conn *DmConnection) execOpt(sql string, optParamList []OptParameter, serve
 					nsql.WriteString("'" + util.StringUtil.ProcessSingleQuoteOfName(lval.Value) + "'")
 				} else {
 					nsql.WriteString("?")
-					optParamList = append(optParamList, newOptParameter(Dm_build_1331.Dm_build_1547(lval.Value, serverEncoding, conn), VARCHAR, VARCHAR_PREC))
+					optParamList = append(optParamList, newOptParameter(Dm_build_1.Dm_build_217(lval.Value, serverEncoding, dc), VARCHAR, VARCHAR_PREC))
 				}
 			}
 		case parser.HEX_INT:
@@ -263,22 +263,22 @@ func (conn *DmConnection) execOpt(sql string, optParamList []OptParameter, serve
 			nsql.WriteString(lval.Value)
 		}
 
-		if breakIndex > 0 {
-			break
-		}
+		//if breakIndex > 0 {
+		//	break
+		//}
 	}
 
-	if breakIndex > 0 {
-		for i := breakIndex + 1; i < len(lvalList); i++ {
-			nsql.WriteString(lvalList[i].Value)
-		}
-	}
+	//if breakIndex > 0 {
+	//	for i := breakIndex + 1; i < len(lvalList); i++ {
+	//		nsql.WriteString(lvalList[i].Value)
+	//	}
+	//}
 
 	return nsql.String(), optParamList, nil
 }
 
-func (conn *DmConnection) hasConst(sql string) (bool, error) {
-	lvalList, err := conn.lex(sql)
+func (dc *DmConnection) hasConst(sql string) (bool, error) {
+	lvalList, err := dc.lex(sql)
 	if err != nil {
 		return false, err
 	}
@@ -291,6 +291,7 @@ func (conn *DmConnection) hasConst(sql string) (bool, error) {
 		switch lvalList[i].Tp {
 		case parser.NULL, parser.INT, parser.DOUBLE, parser.DECIMAL, parser.STRING, parser.HEX_INT:
 			return true, nil
+		default:
 		}
 	}
 	return false, nil

@@ -8,12 +8,13 @@ package dm8
 import (
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/godoes/gorm-dameng/dm8/util"
 )
 
-var rwMap = make(map[string]*rwCounter)
+var rwMap sync.Map
 
 type rwCounter struct {
 	ntrx_primary int64
@@ -24,7 +25,11 @@ type rwCounter struct {
 
 	standbyPercent float64
 
+	standbyNTrxMapMu sync.RWMutex
+
 	standbyNTrxMap map[string]int64
+
+	standbyIdMapMu sync.RWMutex
 
 	standbyIdMap map[string]int32
 
@@ -69,14 +74,18 @@ func (rwc *rwCounter) reset(primaryPercent int32, standbyCount int32) {
 func getRwCounterInstance(conn *DmConnection, standbyCount int32) *rwCounter {
 	key := conn.dmConnector.host + "_" + strconv.Itoa(int(conn.dmConnector.port)) + "_" + strconv.Itoa(int(conn.dmConnector.rwPercent))
 
-	rwc, ok := rwMap[key]
+	val, ok := rwMap.Load(key)
 	if !ok {
-		rwc = newRWCounter(conn.dmConnector.rwPercent, standbyCount)
-		rwMap[key] = rwc
-	} else if rwc.standbyCount != standbyCount {
-		rwc.reset(conn.dmConnector.rwPercent, standbyCount)
+		rwc := newRWCounter(conn.dmConnector.rwPercent, standbyCount)
+		rwMap.Store(key, rwc)
+		return rwc
+	} else {
+		rwc := val.(*rwCounter)
+		if rwc.standbyCount != standbyCount {
+			rwc.reset(conn.dmConnector.rwPercent, standbyCount)
+		}
+		return rwc
 	}
-	return rwc
 }
 
 /**
@@ -124,20 +133,24 @@ func (rwc *rwCounter) adjustNtrx() {
 	if rwc.ntrx_total >= INT64_MAX {
 		var min int64
 		var i = 0
-		for _, num := range rwc.standbyNTrxMap {
-			if i == 0 || num < min {
-				min = num
+		func() {
+			rwc.standbyNTrxMapMu.Lock()
+			defer rwc.standbyNTrxMapMu.Unlock()
+			for _, num := range rwc.standbyNTrxMap {
+				if i == 0 || num < min {
+					min = num
+				}
+				i++
 			}
-			i++
-		}
-		if rwc.ntrx_primary < min {
-			min = rwc.ntrx_primary
-		}
-		rwc.ntrx_primary /= min
-		rwc.ntrx_total /= min
-		for k, v := range rwc.standbyNTrxMap {
-			rwc.standbyNTrxMap[k] = v / min
-		}
+			if rwc.ntrx_primary < min {
+				min = rwc.ntrx_primary
+			}
+			rwc.ntrx_primary /= min
+			rwc.ntrx_total /= min
+			for k, v := range rwc.standbyNTrxMap {
+				rwc.standbyNTrxMap[k] = v / min
+			}
+		}()
 	}
 
 	if rwc.flag[0] <= 0 && util.Sum(rwc.flag[1:]) <= 0 {
@@ -166,6 +179,8 @@ func (rwc *rwCounter) increasePrimaryNtrx() {
 
 func (rwc *rwCounter) getStandbyId(standby *DmConnection) int32 {
 	key := standby.dmConnector.host + ":" + strconv.Itoa(int(standby.dmConnector.port))
+	rwc.standbyIdMapMu.Lock()
+	defer rwc.standbyIdMapMu.Unlock()
 	sid, ok := rwc.standbyIdMap[key]
 	if !ok {
 		sid = int32(len(rwc.standbyIdMap) + 1) // 下标0是primary
@@ -189,19 +204,27 @@ func (rwc *rwCounter) getStandbyFlag(standby *DmConnection) int32 {
 
 func (rwc *rwCounter) increaseStandbyNtrx(standby *DmConnection) {
 	key := standby.dmConnector.host + ":" + strconv.Itoa(int(standby.dmConnector.port))
-	ret, ok := rwc.standbyNTrxMap[key]
-	if ok {
-		ret += 1
-	} else {
-		ret = 1
-	}
-	rwc.standbyNTrxMap[key] = ret
-	sid, ok := rwc.standbyIdMap[key]
-	if !ok {
-		sid = int32(len(rwc.standbyIdMap) + 1) // 下标0是primary
-		rwc.standbyIdMap[key] = sid
-	}
-	rwc.flag[sid]--
+	func() {
+		rwc.standbyNTrxMapMu.Lock()
+		defer rwc.standbyNTrxMapMu.Unlock()
+		ret, ok := rwc.standbyNTrxMap[key]
+		if ok {
+			ret += 1
+		} else {
+			ret = 1
+		}
+		rwc.standbyNTrxMap[key] = ret
+	}()
+	func() {
+		rwc.standbyIdMapMu.Lock()
+		defer rwc.standbyIdMapMu.Unlock()
+		sid, ok := rwc.standbyIdMap[key]
+		if !ok {
+			sid = int32(len(rwc.standbyIdMap) + 1) // 下标0是primary
+			rwc.standbyIdMap[key] = sid
+		}
+		rwc.flag[sid]--
+	}()
 	rwc.ntrx_total++
 }
 

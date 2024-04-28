@@ -69,7 +69,7 @@ func (da *DmArray) create(dc *DmConnection) (*DmArray, error) {
 	return da.createByArrayDescriptor(desc, dc)
 }
 
-func (da *DmArray) createByArrayDescriptor(arrDesc *ArrayDescriptor, conn *DmConnection) (*DmArray, error) {
+func (da *DmArray) createByArrayDescriptor(arrDesc *ArrayDescriptor, _ *DmConnection) (*DmArray, error) {
 
 	if nil == arrDesc {
 		return nil, ECGO_INVALID_PARAMETER_VALUE.throw()

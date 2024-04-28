@@ -2,6 +2,10 @@
 
 *你可以在文件p.go中的发版标记里找到当前驱动的svn号
 
+## svn 16752
+支持在连接串上直接配置动态服务名，使用示例：
+dm://user:password@GroupName?GroupName=(host1:port1,host2:port2,...)
+
 ## svn 16505
 新增连接串属性driverReconnect，配合doSwitch=1或2使用，表示连接重连是否使用驱动自身的重连机制，否则在连接失效时返回sql标准错误driver.ErrBadConn，由go来处理重连
 

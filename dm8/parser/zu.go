@@ -369,7 +369,7 @@ func (lexer *Lexer) Reset(in io.RuneReader) *Lexer {
 	return lexer
 }
 
-func (lexer *Lexer) debug(info string) {
+func (lexer *Lexer) debug(_ string) {
 	if !lexer.debugFlag {
 		return
 	}

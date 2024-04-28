@@ -9,20 +9,27 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"net"
 	"sync"
 
 	"github.com/godoes/gorm-dameng/dm8/i18n"
 )
 
 // 发版标记
-var version = "8.1.3.12"
-var build_date = "2023.04.17"
-var svn = "16532"
+var (
+	version    = "8.1.3.140"
+	build_date = "2024.03.20"
+	svn        = "22766"
+)
 
 var globalDmDriver = newDmDriver()
 
 func init() {
 	sql.Register("dm", globalDmDriver)
+
+	i18n.InitConfig(i18n.Messages_zh_CN)
+	i18n.InitConfig(i18n.Messages_en_US)
+	i18n.InitConfig(i18n.Messages_zh_HK)
 }
 
 func driverInit(svcConfPath string) {
@@ -31,15 +38,6 @@ func driverInit(svcConfPath string) {
 		setDriverAttributes(GlobalProperties)
 	}
 	globalDmDriver.createFilterChain(nil, GlobalProperties)
-
-	switch Locale {
-	case 0:
-		i18n.InitConfig(i18n.Messages_zh_CN)
-	case 1:
-		i18n.InitConfig(i18n.Messages_en_US)
-	case 2:
-		i18n.InitConfig(i18n.Messages_zh_TW)
-	}
 }
 
 type DmDriver struct {
@@ -52,6 +50,34 @@ func newDmDriver() *DmDriver {
 	d := new(DmDriver)
 	d.idGenerator = dmDriverIDGenerator
 	return d
+}
+
+// DialFunc 支持自定义连接网络地址，返回标准net.Conn对象，相关数据库操作的消息包都将发送到该对象
+type DialFunc func(addr string) (net.Conn, error)
+
+// DialContextFunc 支持自定义连接网络地址，返回标准net.Conn对象，相关数据库操作的消息包都将发送到该对象
+type DialContextFunc func(ctx context.Context, addr string) (net.Conn, error)
+
+var (
+	dialsLock sync.RWMutex
+	dials     map[string]DialContextFunc
+)
+
+// RegisterDial 注册自定义连接方法
+func RegisterDial(dialName string, dial DialFunc) {
+	RegisterDialContext(dialName, func(_ context.Context, addr string) (net.Conn, error) {
+		return dial(addr)
+	})
+}
+
+// RegisterDialContext 注册自定义连接方法
+func RegisterDialContext(dialName string, dial DialContextFunc) {
+	dialsLock.Lock()
+	defer dialsLock.Unlock()
+	if dials == nil {
+		dials = make(map[string]DialContextFunc)
+	}
+	dials[dialName] = dial
 }
 
 /*************************************************************

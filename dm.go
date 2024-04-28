@@ -1,8 +1,11 @@
+// 本方言包基于gorm v1.24.2开发，需要配合达梦数据库驱动使用
+
 package dameng
 
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	_ "github.com/godoes/gorm-dameng/dm8" // 引入dm数据库驱动包
 	"gorm.io/gorm"                        // 引入gorm v2包
@@ -35,6 +38,8 @@ var (
 	UpdateClauses = []string{"UPDATE", "SET", "WHERE", "ORDER BY", "LIMIT"}
 	// DeleteClauses delete clauses
 	DeleteClauses = []string{"DELETE", "FROM", "WHERE", "ORDER BY", "LIMIT"}
+
+	defaultDatetimePrecision = 3
 )
 
 func Open(dsn string) gorm.Dialector {
@@ -167,7 +172,7 @@ func (d Dialector) DataTypeOf(field *schema.Field) string {
 	case schema.Bytes:
 		return d.getSchemaBytesType(field)
 	default:
-		return string(field.DataType)
+		return d.getSchemaCustomType(field)
 		// what oracle do:
 		//notNull, _ := field.TagSettings["NOT NULL"]
 		//unique, _ := field.TagSettings["UNIQUE"]
@@ -230,19 +235,19 @@ func (d Dialector) getSchemaStringType(field *schema.Field) string {
 		}
 	}
 
-	if size > 0 && size < 32768 {
+	if size == 0 {
+		if d.VarcharSizeIsCharLength {
+			return "VARCHAR(8188 CHAR)" // 字符长度（8188 * 4）
+		}
+		return "VARCHAR" // 如果未指定长度，缺省为 8188 字节
+	} else if size < 0 || size >= 32768 {
+		return "CLOB" // 长度超过 32767，使用 CLOB（TEXT）
+	} else {
 		// VARCHAR 可以指定一个不超过 32767 的正整数作为字节或字符长度
 		if d.VarcharSizeIsCharLength {
 			return fmt.Sprintf("VARCHAR(%d CHAR)", size) // 字符长度（size * 4）
 		}
 		return fmt.Sprintf("VARCHAR(%d)", size) // 字节长度
-	} else if size == 0 {
-		if d.VarcharSizeIsCharLength {
-			return "VARCHAR(8188 CHAR)" // 字符长度（8188 * 4）
-		}
-		return "VARCHAR" // 如果未指定长度，缺省为 8188 字节
-	} else {
-		return "CLOB" // 长度超过 32767，使用 CLOB（TEXT）
 	}
 }
 
@@ -260,6 +265,16 @@ func (d Dialector) getSchemaBytesType(field *schema.Field) string {
 	}
 
 	return "BLOB"
+}
+
+func (d Dialector) getSchemaCustomType(field *schema.Field) string {
+	sqlType := string(field.DataType)
+
+	if field.AutoIncrement && !strings.Contains(strings.ToLower(sqlType), " auto_increment") && !strings.Contains(strings.ToLower(sqlType), " identity") {
+		sqlType += " IDENTITY(1,1)"
+	}
+
+	return sqlType
 }
 
 func (d Dialector) SavePoint(tx *gorm.DB, name string) error {

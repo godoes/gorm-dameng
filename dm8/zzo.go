@@ -56,27 +56,27 @@ func newTypeData(val interface{}, dataBuf []byte) *TypeData {
 	return td
 }
 
-func (td *TypeData) initTypeData() *TypeData {
-	td.m_dumyData = nil
+func (sv *TypeData) initTypeData() *TypeData {
+	sv.m_dumyData = nil
 
-	td.m_offset = 0
+	sv.m_offset = 0
 
-	td.m_bufLen = 0
+	sv.m_bufLen = 0
 
-	td.m_dataBuf = nil
+	sv.m_dataBuf = nil
 
-	td.m_objBlobDescBuf = nil
+	sv.m_objBlobDescBuf = nil
 
-	td.m_isFromBlob = false
+	sv.m_isFromBlob = false
 
-	td.m_packid = -1
+	sv.m_packid = -1
 
-	td.m_objRefArr = make([]interface{}, 0)
+	sv.m_objRefArr = make([]interface{}, 0)
 
-	return td
+	return sv
 }
 
-func (td TypeData) toStruct(objArr []interface{}, desc *TypeDescriptor) ([]TypeData, error) {
+func (sv TypeData) toStruct(objArr []interface{}, desc *TypeDescriptor) ([]TypeData, error) {
 	size := desc.getStrctMemSize()
 	retData := make([]TypeData, size)
 
@@ -93,21 +93,21 @@ func (td TypeData) toStruct(objArr []interface{}, desc *TypeDescriptor) ([]TypeD
 		default:
 			switch desc.m_fieldsObj[i].getDType() {
 			case CLASS, PLTYPE_RECORD:
-				tdArr, err := td.toStruct(objArr[i].([]interface{}), &desc.m_fieldsObj[i])
+				tdArr, err := sv.toStruct(objArr[i].([]interface{}), &desc.m_fieldsObj[i])
 				if err != nil {
 					return nil, err
 				}
 
 				retData[i] = *newTypeData(newDmStructByTypeData(tdArr, &desc.m_fieldsObj[i]), nil)
 			case ARRAY, SARRAY:
-				tdArr, err := td.toArray(objArr[i].([]interface{}), &desc.m_fieldsObj[i])
+				tdArr, err := sv.toArray(objArr[i].([]interface{}), &desc.m_fieldsObj[i])
 				if err != nil {
 					return nil, err
 				}
 
 				retData[i] = *newTypeData(newDmArrayByTypeData(tdArr, &desc.m_fieldsObj[i]), nil)
 			default:
-				tdArr, err := td.toMemberObj(objArr[i], &desc.m_fieldsObj[i])
+				tdArr, err := sv.toMemberObj(objArr[i], &desc.m_fieldsObj[i])
 				if err != nil {
 					return nil, err
 				}
@@ -119,7 +119,7 @@ func (td TypeData) toStruct(objArr []interface{}, desc *TypeDescriptor) ([]TypeD
 	return retData, nil
 }
 
-func (td TypeData) toArray(objArr []interface{}, desc *TypeDescriptor) ([]TypeData, error) {
+func (sv TypeData) toArray(objArr []interface{}, desc *TypeDescriptor) ([]TypeData, error) {
 	size := len(objArr)
 	retData := make([]TypeData, size)
 	for i := 0; i < size; i++ {
@@ -134,7 +134,7 @@ func (td TypeData) toArray(objArr []interface{}, desc *TypeDescriptor) ([]TypeDa
 		default:
 			switch desc.m_arrObj.getDType() {
 			case CLASS, PLTYPE_RECORD:
-				tdArr, err := td.toStruct(objArr[i].([]interface{}), desc.m_arrObj)
+				tdArr, err := sv.toStruct(objArr[i].([]interface{}), desc.m_arrObj)
 				if err != nil {
 					return nil, err
 				}
@@ -144,21 +144,21 @@ func (td TypeData) toArray(objArr []interface{}, desc *TypeDescriptor) ([]TypeDa
 				tmp, ok := objArr[i].([]interface{})
 
 				if !ok && desc.m_arrObj.m_arrObj != nil {
-					obj, err := td.makeupObjToArr(tmp[i], desc.m_arrObj)
+					obj, err := sv.makeupObjToArr(tmp[i], desc.m_arrObj)
 					if err != nil {
 						return nil, err
 					}
 					objArr[i] = obj
 				}
 
-				tdArr, err := td.toArray(objArr[i].([]interface{}), desc.m_arrObj)
+				tdArr, err := sv.toArray(objArr[i].([]interface{}), desc.m_arrObj)
 				if err != nil {
 					return nil, err
 				}
 
 				retData[i] = *newTypeData(newDmArrayByTypeData(tdArr, desc.m_arrObj), nil)
 			default:
-				tdArr, err := td.toMemberObj(objArr[i], desc.m_arrObj)
+				tdArr, err := sv.toMemberObj(objArr[i], desc.m_arrObj)
 				if err != nil {
 					return nil, err
 				}
@@ -170,7 +170,7 @@ func (td TypeData) toArray(objArr []interface{}, desc *TypeDescriptor) ([]TypeDa
 	return retData, nil
 }
 
-func (td TypeData) makeupObjToArr(obj interface{}, objDesc *TypeDescriptor) ([]interface{}, error) {
+func (sv TypeData) makeupObjToArr(obj interface{}, objDesc *TypeDescriptor) ([]interface{}, error) {
 	arrType := objDesc.getDType()
 	dynamic := true
 	arrLen := 0
@@ -203,7 +203,7 @@ func (td TypeData) makeupObjToArr(obj interface{}, objDesc *TypeDescriptor) ([]i
 		}
 
 		ret := make([]interface{}, prec)
-		rs := Dm_build_1331.Dm_build_1547(strRet, objDesc.getServerEncoding(), objDesc.m_conn)
+		rs := Dm_build_1.Dm_build_217(strRet, objDesc.getServerEncoding(), objDesc.m_conn)
 		for i := 0; i < prec; i++ {
 			ret[i] = rs[i]
 		}
@@ -214,7 +214,7 @@ func (td TypeData) makeupObjToArr(obj interface{}, objDesc *TypeDescriptor) ([]i
 	return nil, ECGO_DATA_CONVERTION_ERROR.throw()
 }
 
-func (td TypeData) toMemberObj(mem interface{}, desc *TypeDescriptor) (*TypeData, error) {
+func (sv TypeData) toMemberObj(mem interface{}, desc *TypeDescriptor) (*TypeData, error) {
 	var bs []byte
 	scale := desc.getScale()
 	prec := desc.getPrec()
@@ -237,14 +237,14 @@ func (td TypeData) toMemberObj(mem interface{}, desc *TypeDescriptor) (*TypeData
 	return newTypeData(mem, bs), nil
 }
 
-func (td TypeData) typeDataToBytes(data *TypeData, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) typeDataToBytes(data *TypeData, desc *TypeDescriptor) ([]byte, error) {
 	dType := desc.getDType()
 	var innerData []byte
 	var err error
 	if nil == data.m_dumyData {
-		innerData = td.realocBuffer(nil, 0, 2)
-		Dm_build_1331.Dm_build_1332(innerData, 0, byte(0))
-		Dm_build_1331.Dm_build_1332(innerData, 1, byte(0))
+		innerData = sv.realocBuffer(nil, 0, 2)
+		Dm_build_1.Dm_build_2(innerData, 0, byte(0))
+		Dm_build_1.Dm_build_2(innerData, 1, byte(0))
 		return innerData, nil
 	}
 
@@ -253,33 +253,33 @@ func (td TypeData) typeDataToBytes(data *TypeData, desc *TypeDescriptor) ([]byte
 	switch dType {
 	case ARRAY:
 
-		innerData, err = td.arrayToBytes(data.m_dumyData.(*DmArray), desc)
+		innerData, err = sv.arrayToBytes(data.m_dumyData.(*DmArray), desc)
 		if err != nil {
 			return nil, err
 		}
 
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 		copy(result[offset:offset+len(innerData)], innerData[:])
 		return result, nil
 
 	case SARRAY:
 
-		innerData, err = td.sarrayToBytes(data.m_dumyData.(*DmArray), desc)
+		innerData, err = sv.sarrayToBytes(data.m_dumyData.(*DmArray), desc)
 		if err != nil {
 			return nil, err
 		}
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 
 		copy(result[offset:offset+len(innerData)], innerData[:])
@@ -287,72 +287,72 @@ func (td TypeData) typeDataToBytes(data *TypeData, desc *TypeDescriptor) ([]byte
 
 	case CLASS:
 
-		innerData, err = td.objToBytes(data.m_dumyData, desc)
+		innerData, err = sv.objToBytes(data.m_dumyData, desc)
 		if err != nil {
 			return nil, err
 		}
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 		copy(result[offset:offset+len(innerData)], innerData[:])
 		return result, nil
 
 	case PLTYPE_RECORD:
 
-		innerData, err = td.recordToBytes(data.m_dumyData.(*DmStruct), desc)
+		innerData, err = sv.recordToBytes(data.m_dumyData.(*DmStruct), desc)
 		if err != nil {
 			return nil, err
 		}
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 
 		copy(result[offset:offset+len(innerData)], innerData[:])
 		return result, nil
 
 	case BLOB, CLOB:
-		innerData, err = td.convertLobToBytes(data.m_dumyData, int(desc.column.colType), desc.getServerEncoding())
+		innerData, err = sv.convertLobToBytes(data.m_dumyData, int(desc.column.colType), desc.getServerEncoding())
 
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 		copy(result[offset:offset+len(innerData)], innerData[:])
 		return result, nil
 
 	case BOOLEAN:
-		innerData = td.realocBuffer(nil, 0, 2)
-		Dm_build_1331.Dm_build_1332(innerData, 0, byte(0))
+		innerData = sv.realocBuffer(nil, 0, 2)
+		Dm_build_1.Dm_build_2(innerData, 0, byte(0))
 		if data.m_dataBuf != nil && len(data.m_dataBuf) > 0 {
-			Dm_build_1331.Dm_build_1332(innerData, 1, data.m_dataBuf[0])
+			Dm_build_1.Dm_build_2(innerData, 1, data.m_dataBuf[0])
 		} else {
-			Dm_build_1331.Dm_build_1332(innerData, 1, byte(0))
+			Dm_build_1.Dm_build_2(innerData, 1, byte(0))
 		}
 		return innerData, nil
 
 	default:
 
 		innerData = data.m_dataBuf
-		result = td.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE+USINT_SIZE)
+		result = sv.realocBuffer(nil, 0, len(innerData)+BYTE_SIZE+BYTE_SIZE+USINT_SIZE)
 
-		Dm_build_1331.Dm_build_1332(result, 0, byte(0))
+		Dm_build_1.Dm_build_2(result, 0, byte(0))
 		offset = 1
 
-		Dm_build_1331.Dm_build_1332(result, offset, byte(1))
+		Dm_build_1.Dm_build_2(result, offset, byte(1))
 		offset += 1
 
-		Dm_build_1331.Dm_build_1342(result, offset, int16(len(innerData)))
+		Dm_build_1.Dm_build_12(result, offset, int16(len(innerData)))
 		offset += 2
 
 		copy(result[offset:offset+len(innerData)], innerData[:])
@@ -361,7 +361,7 @@ func (td TypeData) typeDataToBytes(data *TypeData, desc *TypeDescriptor) ([]byte
 	}
 }
 
-func (td TypeData) convertLobToBytes(value interface{}, dtype int, serverEncoding string) ([]byte, error) {
+func (sv TypeData) convertLobToBytes(value interface{}, dtype int, serverEncoding string) ([]byte, error) {
 	var tmp []byte
 	var ret []byte
 	if dtype == BLOB {
@@ -377,7 +377,7 @@ func (td TypeData) convertLobToBytes(value interface{}, dtype int, serverEncodin
 			}
 
 			ret = make([]byte, l+ULINT_SIZE)
-			Dm_build_1331.Dm_build_1347(ret, 0, int32(l))
+			Dm_build_1.Dm_build_17(ret, 0, int32(l))
 			copy(ret[:ULINT_SIZE:ULINT_SIZE+l], tmp[:l])
 			return ret, nil
 		}
@@ -397,9 +397,9 @@ func (td TypeData) convertLobToBytes(value interface{}, dtype int, serverEncodin
 				return nil, err
 			}
 
-			tmp = Dm_build_1331.Dm_build_1547(subString, serverEncoding, nil)
+			tmp = Dm_build_1.Dm_build_217(subString, serverEncoding, nil)
 			ret = make([]byte, len(tmp)+ULINT_SIZE)
-			Dm_build_1331.Dm_build_1347(ret, 0, int32(l))
+			Dm_build_1.Dm_build_17(ret, 0, int32(l))
 			copy(ret[:ULINT_SIZE:ULINT_SIZE+l], tmp[:l])
 		}
 		return ret, nil
@@ -408,19 +408,19 @@ func (td TypeData) convertLobToBytes(value interface{}, dtype int, serverEncodin
 	return nil, ECGO_DATA_CONVERTION_ERROR.throw()
 }
 
-func (td TypeData) sarrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) sarrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
 	realLen := len(data.m_arrData)
 	results := make([][]byte, realLen)
 	var rdata []byte
 	var err error
 
 	if desc.getObjId() == 4 {
-		return td.ctlnToBytes(data, desc)
+		return sv.ctlnToBytes(data, desc)
 	}
 
 	totalLen := 0
 	for i := 0; i < realLen; i++ {
-		results[i], err = td.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
+		results[i], err = sv.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
@@ -428,13 +428,13 @@ func (td TypeData) sarrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, e
 	}
 
 	totalLen += ULINT_SIZE + ULINT_SIZE
-	rdata = td.realocBuffer(nil, 0, totalLen)
+	rdata = sv.realocBuffer(nil, 0, totalLen)
 	off := 0
 
-	Dm_build_1331.Dm_build_1347(rdata, off, int32(totalLen))
+	Dm_build_1.Dm_build_17(rdata, off, int32(totalLen))
 	off += ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, off, int32(data.m_arrDesc.getLength()))
+	Dm_build_1.Dm_build_17(rdata, off, int32(data.m_arrDesc.getLength()))
 	off += ULINT_SIZE
 
 	for i := 0; i < realLen; i++ {
@@ -445,7 +445,7 @@ func (td TypeData) sarrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, e
 	return rdata, nil
 }
 
-func (td TypeData) ctlnToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) ctlnToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
 	results := make([][]byte, len(data.m_arrData))
 	var rdata []byte
 	var err error
@@ -456,29 +456,29 @@ func (td TypeData) ctlnToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, err
 	totalLen += USINT_SIZE + USINT_SIZE + ULINT_SIZE
 
 	for i := 0; i < len(data.m_arrData); i++ {
-		results[i], err = td.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
+		results[i], err = sv.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
 		totalLen += len(results[i])
 	}
 
-	rdata = td.realocBuffer(nil, 0, totalLen)
+	rdata = sv.realocBuffer(nil, 0, totalLen)
 
 	offset := 0
 
-	Dm_build_1331.Dm_build_1332(rdata, offset, byte(0))
+	Dm_build_1.Dm_build_2(rdata, offset, byte(0))
 	offset += BYTE_SIZE
 
 	offset += ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1342(rdata, offset, int16(desc.getCltnType()))
+	Dm_build_1.Dm_build_12(rdata, offset, int16(desc.getCltnType()))
 	offset += USINT_SIZE
 
-	Dm_build_1331.Dm_build_1342(rdata, offset, int16(desc.m_arrObj.getDType()))
+	Dm_build_1.Dm_build_12(rdata, offset, int16(desc.m_arrObj.getDType()))
 	offset += USINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, int32(len(data.m_arrData)))
+	Dm_build_1.Dm_build_17(rdata, offset, int32(len(data.m_arrData)))
 	offset += ULINT_SIZE
 
 	for i := 0; i < len(data.m_arrData); i++ {
@@ -486,22 +486,22 @@ func (td TypeData) ctlnToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, err
 		offset += len(results[i])
 	}
 
-	Dm_build_1331.Dm_build_1347(rdata, BYTE_SIZE, int32(offset))
+	Dm_build_1.Dm_build_17(rdata, BYTE_SIZE, int32(offset))
 
 	return rdata, nil
 }
 
-func (td TypeData) arrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) arrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, error) {
 	results := make([][]byte, len(data.m_arrData))
 	var rdata []byte
 	var err error
 	if desc.getObjId() == 4 {
-		return td.ctlnToBytes(data, desc)
+		return sv.ctlnToBytes(data, desc)
 	}
 
 	totalLen := 0
 	for i := 0; i < len(data.m_arrData); i++ {
-		results[i], err = td.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
+		results[i], err = sv.typeDataToBytes(&data.m_arrData[i], desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
@@ -515,25 +515,25 @@ func (td TypeData) arrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, er
 		totalLen += USINT_SIZE * total
 	}
 
-	rdata = td.realocBuffer(nil, 0, totalLen)
+	rdata = sv.realocBuffer(nil, 0, totalLen)
 
-	Dm_build_1331.Dm_build_1347(rdata, 0, int32(totalLen))
+	Dm_build_1.Dm_build_17(rdata, 0, int32(totalLen))
 	offset := ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, int32(len(data.m_arrData)))
+	Dm_build_1.Dm_build_17(rdata, offset, int32(len(data.m_arrData)))
 	offset += ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, 0)
+	Dm_build_1.Dm_build_17(rdata, offset, 0)
 	offset += ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, int32(data.m_objCount))
+	Dm_build_1.Dm_build_17(rdata, offset, int32(data.m_objCount))
 	offset += ULINT_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, int32(data.m_strCount))
+	Dm_build_1.Dm_build_17(rdata, offset, int32(data.m_strCount))
 	offset += ULINT_SIZE
 
 	for i := 0; i < total; i++ {
-		Dm_build_1331.Dm_build_1347(rdata, offset, int32(data.m_objStrOffs[i]))
+		Dm_build_1.Dm_build_17(rdata, offset, int32(data.m_objStrOffs[i]))
 		offset += ULINT_SIZE
 	}
 
@@ -545,17 +545,17 @@ func (td TypeData) arrayToBytes(data *DmArray, desc *TypeDescriptor) ([]byte, er
 	return rdata, nil
 }
 
-func (td TypeData) objToBytes(data interface{}, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) objToBytes(data interface{}, desc *TypeDescriptor) ([]byte, error) {
 
 	switch data.(type) {
 	case *DmArray:
-		return td.arrayToBytes(data.(*DmArray), desc)
+		return sv.arrayToBytes(data.(*DmArray), desc)
 	default:
-		return td.structToBytes(data.(*DmStruct), desc)
+		return sv.structToBytes(data.(*DmStruct), desc)
 	}
 }
 
-func (td TypeData) structToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) structToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, error) {
 	size := desc.getStrctMemSize()
 	results := make([][]byte, size)
 	var rdata []byte
@@ -563,7 +563,7 @@ func (td TypeData) structToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 
 	totalLen := 0
 	for i := 0; i < size; i++ {
-		results[i], err = td.typeDataToBytes(&data.m_attribs[i], &desc.m_fieldsObj[i])
+		results[i], err = sv.typeDataToBytes(&data.m_attribs[i], &desc.m_fieldsObj[i])
 		if err != nil {
 			return nil, err
 		}
@@ -572,13 +572,13 @@ func (td TypeData) structToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 
 	totalLen += BYTE_SIZE + ULINT_SIZE
 
-	rdata = td.realocBuffer(nil, 0, totalLen)
+	rdata = sv.realocBuffer(nil, 0, totalLen)
 	offset := 0
 
-	Dm_build_1331.Dm_build_1332(rdata, offset, byte(0))
+	Dm_build_1.Dm_build_2(rdata, offset, byte(0))
 	offset += BYTE_SIZE
 
-	Dm_build_1331.Dm_build_1347(rdata, offset, int32(totalLen))
+	Dm_build_1.Dm_build_17(rdata, offset, int32(totalLen))
 	offset += ULINT_SIZE
 
 	for i := 0; i < size; i++ {
@@ -589,7 +589,7 @@ func (td TypeData) structToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 	return rdata, nil
 }
 
-func (td TypeData) recordToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) recordToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, error) {
 	size := desc.getStrctMemSize()
 	results := make([][]byte, size)
 	var rdata []byte
@@ -597,7 +597,7 @@ func (td TypeData) recordToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 
 	totalLen := 0
 	for i := 0; i < size; i++ {
-		results[i], err = td.typeDataToBytes(&data.m_attribs[i], &desc.m_fieldsObj[i])
+		results[i], err = sv.typeDataToBytes(&data.m_attribs[i], &desc.m_fieldsObj[i])
 		if err != nil {
 			return nil, err
 		}
@@ -605,8 +605,8 @@ func (td TypeData) recordToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 	}
 
 	totalLen += ULINT_SIZE
-	rdata = td.realocBuffer(nil, 0, totalLen)
-	Dm_build_1331.Dm_build_1347(rdata, 0, int32(totalLen))
+	rdata = sv.realocBuffer(nil, 0, totalLen)
+	Dm_build_1.Dm_build_17(rdata, 0, int32(totalLen))
 
 	offset := ULINT_SIZE
 	for i := 0; i < desc.getStrctMemSize(); i++ {
@@ -617,36 +617,36 @@ func (td TypeData) recordToBytes(data *DmStruct, desc *TypeDescriptor) ([]byte, 
 	return rdata, nil
 }
 
-func (td TypeData) bytesToBlob(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
+func (sv TypeData) bytesToBlob(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
 	offset := out.m_offset
-	l := Dm_build_1331.Dm_build_1433(val, offset)
+	l := Dm_build_1.Dm_build_103(val, offset)
 	offset += ULINT_SIZE
 
-	tmp := Dm_build_1331.Dm_build_1482(val, offset, int(l))
+	tmp := Dm_build_1.Dm_build_152(val, offset, int(l))
 	offset += int(l)
 	out.m_offset = offset
 
 	return newTypeData(newBlobOfLocal(tmp, desc.m_conn), tmp), nil
 }
 
-func (td TypeData) bytesToClob(val []byte, out *TypeData, desc *TypeDescriptor, serverEncoding string) (*TypeData, error) {
+func (sv TypeData) bytesToClob(val []byte, out *TypeData, desc *TypeDescriptor, serverEncoding string) (*TypeData, error) {
 	offset := out.m_offset
-	l := Dm_build_1331.Dm_build_1433(val, offset)
+	l := Dm_build_1.Dm_build_103(val, offset)
 	offset += ULINT_SIZE
 
-	tmp := Dm_build_1331.Dm_build_1482(val, offset, int(l))
+	tmp := Dm_build_1.Dm_build_152(val, offset, int(l))
 	offset += int(l)
 	out.m_offset = offset
 
-	return newTypeData(newClobOfLocal(Dm_build_1331.Dm_build_1488(tmp, 0, len(tmp), serverEncoding, desc.m_conn), desc.m_conn), tmp), nil
+	return newTypeData(newClobOfLocal(Dm_build_1.Dm_build_158(tmp, 0, len(tmp), serverEncoding, desc.m_conn), desc.m_conn), tmp), nil
 }
 
-func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
+func (sv TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
 	offset := out.m_offset
 
 	offset += 1
 
-	null_flag := Dm_build_1331.Dm_build_1424(val, offset)
+	null_flag := Dm_build_1.Dm_build_94(val, offset)
 	offset += 1
 
 	out.m_offset = offset
@@ -657,7 +657,7 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 			b = true
 		}
 
-		tmp := Dm_build_1331.Dm_build_1482(val, offset-1, 1)
+		tmp := Dm_build_1.Dm_build_152(val, offset-1, 1)
 		return newTypeData(b, tmp), nil
 	}
 
@@ -667,13 +667,13 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 	switch desc.getDType() {
 	case CLASS:
 		if null_flag&byte(1) != byte(0) {
-			retObj, err = td.bytesToObj(val, out, desc)
+			retObj, err = sv.bytesToObj(val, out, desc)
 			if err != nil {
 				return nil, err
 			}
 
 			if out.m_offset > offset {
-				retDataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+				retDataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 			}
 
 			return newTypeData(retObj, retDataBuf), nil
@@ -683,13 +683,13 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 
 	case ARRAY:
 		if (null_flag & byte(1)) != byte(0) {
-			retObj, err = td.bytesToArray(val, out, desc)
+			retObj, err = sv.bytesToArray(val, out, desc)
 			if err != nil {
 				return nil, err
 			}
 
 			if out.m_offset > offset {
-				retDataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+				retDataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 			}
 
 			return newTypeData(retObj, retDataBuf), nil
@@ -699,13 +699,13 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 
 	case PLTYPE_RECORD:
 		if (null_flag & byte(1)) != byte(0) {
-			retObj, err = td.bytesToRecord(val, out, desc)
+			retObj, err = sv.bytesToRecord(val, out, desc)
 			if err != nil {
 				return nil, err
 			}
 
 			if out.m_offset > offset {
-				retDataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+				retDataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 			}
 
 			return newTypeData(retObj, retDataBuf), nil
@@ -715,13 +715,13 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 
 	case SARRAY:
 		if (null_flag & byte(1)) != byte(0) {
-			retObj, err = td.bytesToSArray(val, out, desc)
+			retObj, err = sv.bytesToSArray(val, out, desc)
 			if err != nil {
 				return nil, err
 			}
 
 			if out.m_offset > offset {
-				retDataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+				retDataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 			}
 
 			return newTypeData(retObj, retDataBuf), nil
@@ -731,21 +731,21 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 
 	case BLOB:
 		if null_flag&byte(1) != byte(0) {
-			return td.bytesToBlob(val, out, desc)
+			return sv.bytesToBlob(val, out, desc)
 		} else {
 			return newTypeData(nil, nil), nil
 		}
 
 	case CLOB:
 		if null_flag&byte(1) != byte(0) {
-			return td.bytesToClob(val, out, desc, desc.getServerEncoding())
+			return sv.bytesToClob(val, out, desc, desc.getServerEncoding())
 		} else {
 			return newTypeData(nil, nil), nil
 		}
 
 	default:
 		if null_flag&byte(1) != byte(0) {
-			return td.convertBytes2BaseData(val, out, desc)
+			return sv.convertBytes2BaseData(val, out, desc)
 		} else {
 			return newTypeData(nil, nil), nil
 		}
@@ -753,9 +753,9 @@ func (td TypeData) bytesToTypeData(val []byte, out *TypeData, desc *TypeDescript
 	}
 }
 
-func (td TypeData) checkObjExist(val []byte, out *TypeData) bool {
+func (sv TypeData) checkObjExist(val []byte, out *TypeData) bool {
 	offset := out.m_offset
-	exist_flag := Dm_build_1331.Dm_build_1424(val, offset)
+	exist_flag := Dm_build_1.Dm_build_94(val, offset)
 	offset += 1
 
 	out.m_offset = offset
@@ -768,10 +768,10 @@ func (td TypeData) checkObjExist(val []byte, out *TypeData) bool {
 	return false
 }
 
-func (td TypeData) findObjByPackId(val []byte, out *TypeData) (*DmStruct, error) {
+func (sv TypeData) findObjByPackId(val []byte, out *TypeData) (*DmStruct, error) {
 	offset := out.m_offset
 
-	pack_id := int(Dm_build_1331.Dm_build_1433(val, offset))
+	pack_id := int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
 	out.m_offset = offset
@@ -783,16 +783,16 @@ func (td TypeData) findObjByPackId(val []byte, out *TypeData) (*DmStruct, error)
 	return out.m_objRefArr[pack_id].(*DmStruct), nil
 }
 
-func (td TypeData) addObjToRefArr(out *TypeData, objToAdd interface{}) {
+func (sv TypeData) addObjToRefArr(out *TypeData, objToAdd interface{}) {
 	out.m_objRefArr = append(out.m_objRefArr, objToAdd)
 	out.m_packid++
 }
 
-func (td TypeData) checkObjClnt(desc *TypeDescriptor) bool {
+func (sv TypeData) checkObjClnt(desc *TypeDescriptor) bool {
 	return desc.m_objId == 4
 }
 
-func (td TypeData) bytesToObj_EXACT(val []byte, out *TypeData, desc *TypeDescriptor) (*DmStruct, error) {
+func (sv TypeData) bytesToObj_EXACT(val []byte, out *TypeData, desc *TypeDescriptor) (*DmStruct, error) {
 	strOut := newDmStructByTypeData(nil, desc)
 	var sub_desc *TypeDescriptor
 	offset := out.m_offset
@@ -804,24 +804,24 @@ func (td TypeData) bytesToObj_EXACT(val []byte, out *TypeData, desc *TypeDescrip
 	strOut.m_attribs = make([]TypeData, size)
 	for i := 0; i < size; i++ {
 		sub_desc = &desc.m_fieldsObj[i]
-		tmp, err := td.bytesToTypeData(val, out, sub_desc)
+		tmp, err := sv.bytesToTypeData(val, out, sub_desc)
 		if err != nil {
 			return nil, err
 		}
 		strOut.m_attribs[i] = *tmp
 	}
 
-	strOut.m_dataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+	strOut.m_dataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 
 	return strOut, nil
 }
 
-func (td TypeData) bytesToNestTab(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
+func (sv TypeData) bytesToNestTab(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
 	offset := out.m_offset
 
 	offset += USINT_SIZE
 
-	count := Dm_build_1331.Dm_build_1433(val, offset)
+	count := Dm_build_1.Dm_build_103(val, offset)
 	offset += ULINT_SIZE
 
 	out.m_offset = offset
@@ -830,24 +830,24 @@ func (td TypeData) bytesToNestTab(val []byte, out *TypeData, desc *TypeDescripto
 	arrOut.m_itemCount = int(count)
 	arrOut.m_arrData = make([]TypeData, count)
 	for i := 0; i < int(count); i++ {
-		tmp, err := td.bytesToTypeData(val, out, desc.m_arrObj)
+		tmp, err := sv.bytesToTypeData(val, out, desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
 		arrOut.m_arrData[i] = *tmp
 	}
 
-	arrOut.m_dataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+	arrOut.m_dataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 
 	return arrOut, nil
 }
 
-func (td TypeData) bytesToClnt(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
+func (sv TypeData) bytesToClnt(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
 	var array *DmArray
 
 	offset := out.m_offset
 
-	cltn_type := Dm_build_1331.Dm_build_1428(val, offset)
+	cltn_type := Dm_build_1.Dm_build_98(val, offset)
 	offset += USINT_SIZE
 
 	out.m_offset = offset
@@ -856,35 +856,35 @@ func (td TypeData) bytesToClnt(val []byte, out *TypeData, desc *TypeDescriptor) 
 		return nil, ECGO_UNSUPPORTED_TYPE.throw()
 
 	case CLTN_TYPE_NST_TABLE, CLTN_TYPE_VARRAY:
-		return td.bytesToNestTab(val, out, desc)
+		return sv.bytesToNestTab(val, out, desc)
 	}
 
 	return array, nil
 }
 
-func (td TypeData) bytesToObj(val []byte, out *TypeData, desc *TypeDescriptor) (interface{}, error) {
+func (sv TypeData) bytesToObj(val []byte, out *TypeData, desc *TypeDescriptor) (interface{}, error) {
 	var retObj interface{}
 	var err error
 	if out == nil {
 		out = newTypeData(nil, nil)
 	}
 
-	if td.checkObjExist(val, out) {
-		retObj, err = td.findObjByPackId(val, out)
+	if sv.checkObjExist(val, out) {
+		retObj, err = sv.findObjByPackId(val, out)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		td.addObjToRefArr(out, retObj)
+		sv.addObjToRefArr(out, retObj)
 	}
 
-	if td.checkObjClnt(desc) {
-		retObj, err = td.bytesToClnt(val, out, desc)
+	if sv.checkObjClnt(desc) {
+		retObj, err = sv.bytesToClnt(val, out, desc)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		retObj, err = td.bytesToObj_EXACT(val, out, desc)
+		retObj, err = sv.bytesToObj_EXACT(val, out, desc)
 		if err != nil {
 			return nil, err
 		}
@@ -893,7 +893,7 @@ func (td TypeData) bytesToObj(val []byte, out *TypeData, desc *TypeDescriptor) (
 	return retObj, nil
 }
 
-func (td TypeData) bytesToArray(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
+func (sv TypeData) bytesToArray(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
 	arrOut := newDmArrayByTypeData(nil, desc)
 	if out == nil {
 		out = newTypeData(nil, nil)
@@ -901,25 +901,25 @@ func (td TypeData) bytesToArray(val []byte, out *TypeData, desc *TypeDescriptor)
 
 	offset := out.m_offset
 
-	arrOut.m_bufLen = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_bufLen = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += 4
 
-	arrOut.m_itemCount = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_itemCount = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
-	arrOut.m_itemSize = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_itemSize = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
-	arrOut.m_objCount = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_objCount = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
-	arrOut.m_strCount = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_strCount = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
 	total := arrOut.m_objCount + arrOut.m_strCount
 	arrOut.m_objStrOffs = make([]int, total)
 	for i := 0; i < total; i++ {
-		arrOut.m_objStrOffs[i] = int(Dm_build_1331.Dm_build_1433(val, offset))
+		arrOut.m_objStrOffs[i] = int(Dm_build_1.Dm_build_103(val, offset))
 		offset += 4
 	}
 
@@ -927,19 +927,19 @@ func (td TypeData) bytesToArray(val []byte, out *TypeData, desc *TypeDescriptor)
 
 	arrOut.m_arrData = make([]TypeData, arrOut.m_itemCount)
 	for i := 0; i < arrOut.m_itemCount; i++ {
-		tmp, err := td.bytesToTypeData(val, out, desc.m_arrObj)
+		tmp, err := sv.bytesToTypeData(val, out, desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
 		arrOut.m_arrData[i] = *tmp
 	}
 
-	arrOut.m_dataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+	arrOut.m_dataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 
 	return arrOut, nil
 }
 
-func (td TypeData) bytesToSArray(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
+func (sv TypeData) bytesToSArray(val []byte, out *TypeData, desc *TypeDescriptor) (*DmArray, error) {
 	if out == nil {
 		out = newTypeData(nil, nil)
 	}
@@ -947,29 +947,29 @@ func (td TypeData) bytesToSArray(val []byte, out *TypeData, desc *TypeDescriptor
 	offset := out.m_offset
 
 	arrOut := newDmArrayByTypeData(nil, desc)
-	arrOut.m_bufLen = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_bufLen = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
-	arrOut.m_itemCount = int(Dm_build_1331.Dm_build_1433(val, offset))
+	arrOut.m_itemCount = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
 	out.m_offset = offset
 
 	arrOut.m_arrData = make([]TypeData, arrOut.m_itemCount)
 	for i := 0; i < arrOut.m_itemCount; i++ {
-		tmp, err := td.bytesToTypeData(val, out, desc.m_arrObj)
+		tmp, err := sv.bytesToTypeData(val, out, desc.m_arrObj)
 		if err != nil {
 			return nil, err
 		}
 		arrOut.m_arrData[i] = *tmp
 	}
 
-	arrOut.m_dataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+	arrOut.m_dataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 
 	return arrOut, nil
 }
 
-func (td TypeData) bytesToRecord(val []byte, out *TypeData, desc *TypeDescriptor) (*DmStruct, error) {
+func (sv TypeData) bytesToRecord(val []byte, out *TypeData, desc *TypeDescriptor) (*DmStruct, error) {
 	if out == nil {
 		out = newTypeData(nil, nil)
 	}
@@ -977,33 +977,33 @@ func (td TypeData) bytesToRecord(val []byte, out *TypeData, desc *TypeDescriptor
 	offset := out.m_offset
 
 	strOut := newDmStructByTypeData(nil, desc)
-	strOut.m_bufLen = int(Dm_build_1331.Dm_build_1433(val, offset))
+	strOut.m_bufLen = int(Dm_build_1.Dm_build_103(val, offset))
 	offset += ULINT_SIZE
 
 	out.m_offset = offset
 
 	strOut.m_attribs = make([]TypeData, desc.getStrctMemSize())
 	for i := 0; i < desc.getStrctMemSize(); i++ {
-		tmp, err := td.bytesToTypeData(val, out, &desc.m_fieldsObj[i])
+		tmp, err := sv.bytesToTypeData(val, out, &desc.m_fieldsObj[i])
 		if err != nil {
 			return nil, err
 		}
 		strOut.m_attribs[i] = *tmp
 	}
 
-	strOut.m_dataBuf = Dm_build_1331.Dm_build_1482(val, offset, out.m_offset-offset)
+	strOut.m_dataBuf = Dm_build_1.Dm_build_152(val, offset, out.m_offset-offset)
 
 	return strOut, nil
 }
 
-func (td TypeData) objBlob_GetChkBuf(buf []byte, typeData *TypeData) {
+func (sv TypeData) objBlob_GetChkBuf(buf []byte, typeData *TypeData) {
 
 	offset := 4
 
-	l := int(Dm_build_1331.Dm_build_1433(buf, offset))
+	l := int(Dm_build_1.Dm_build_103(buf, offset))
 	offset += ULINT_SIZE
 
-	typeData.m_objBlobDescBuf = Dm_build_1331.Dm_build_1482(buf, offset, l)
+	typeData.m_objBlobDescBuf = Dm_build_1.Dm_build_152(buf, offset, l)
 	offset += l
 
 	typeData.m_isFromBlob = true
@@ -1011,7 +1011,7 @@ func (td TypeData) objBlob_GetChkBuf(buf []byte, typeData *TypeData) {
 	typeData.m_offset = offset
 }
 
-func (td TypeData) objBlobToObj(lob *DmBlob, desc *TypeDescriptor) (interface{}, error) {
+func (sv TypeData) objBlobToObj(lob *DmBlob, desc *TypeDescriptor) (interface{}, error) {
 	typeData := newTypeData(nil, nil)
 	loblen, err := lob.GetLength()
 	if err != nil {
@@ -1023,25 +1023,25 @@ func (td TypeData) objBlobToObj(lob *DmBlob, desc *TypeDescriptor) (interface{},
 		return nil, err
 	}
 
-	td.objBlob_GetChkBuf(buf, typeData)
+	sv.objBlob_GetChkBuf(buf, typeData)
 
-	return td.bytesToObj(buf, typeData, desc)
+	return sv.bytesToObj(buf, typeData, desc)
 }
 
-func (td TypeData) objBlobToBytes(lobBuf []byte, desc *TypeDescriptor) ([]byte, error) {
+func (sv TypeData) objBlobToBytes(lobBuf []byte, desc *TypeDescriptor) ([]byte, error) {
 	l := len(lobBuf)
 	offset := 0
 
-	magic := Dm_build_1331.Dm_build_1433(lobBuf, offset)
+	magic := Dm_build_1.Dm_build_103(lobBuf, offset)
 	offset += ULINT_SIZE
 
 	if OBJ_BLOB_MAGIC != magic {
 		return nil, ECGO_INVALID_OBJ_BLOB.throw()
 	}
 
-	descLen := int(Dm_build_1331.Dm_build_1433(lobBuf, offset))
+	descLen := int(Dm_build_1.Dm_build_103(lobBuf, offset))
 	offset += ULINT_SIZE
-	descBuf := Dm_build_1331.Dm_build_1482(lobBuf, offset, descLen)
+	descBuf := Dm_build_1.Dm_build_152(lobBuf, offset, descLen)
 	tmp, err := desc.getClassDescChkInfo()
 	if err != nil {
 		return nil, err
@@ -1056,7 +1056,7 @@ func (td TypeData) objBlobToBytes(lobBuf []byte, desc *TypeDescriptor) ([]byte, 
 	return ret, nil
 }
 
-func (td TypeData) realocBuffer(oldBuf []byte, offset int, needLen int) []byte {
+func (sv TypeData) realocBuffer(oldBuf []byte, offset int, needLen int) []byte {
 	var retBuf []byte
 
 	if oldBuf == nil {
@@ -1071,19 +1071,19 @@ func (td TypeData) realocBuffer(oldBuf []byte, offset int, needLen int) []byte {
 	return retBuf
 }
 
-func (td TypeData) convertBytes2BaseData(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
+func (sv TypeData) convertBytes2BaseData(val []byte, out *TypeData, desc *TypeDescriptor) (*TypeData, error) {
 	offset := out.m_offset
 	isNull := false
-	valueLen := int(Dm_build_1331.Dm_build_1455(val, offset))
+	valueLen := int(Dm_build_1.Dm_build_125(val, offset))
 	offset += USINT_SIZE
 
-	if valueLen == int(Dm_build_742) {
+	if valueLen == int(Dm_build_1027) {
 		valueLen = 0
 		isNull = true
 	}
 
 	if -1 == valueLen {
-		valueLen = int(Dm_build_1331.Dm_build_1433(val, offset))
+		valueLen = int(Dm_build_1.Dm_build_103(val, offset))
 		offset += ULINT_SIZE
 	}
 
@@ -1094,7 +1094,7 @@ func (td TypeData) convertBytes2BaseData(val []byte, out *TypeData, desc *TypeDe
 
 	var tmpObj interface{}
 	var err error
-	temp := Dm_build_1331.Dm_build_1482(val, offset, valueLen)
+	temp := Dm_build_1.Dm_build_152(val, offset, valueLen)
 	offset += valueLen
 	out.m_offset = offset
 
@@ -1105,7 +1105,7 @@ func (td TypeData) convertBytes2BaseData(val []byte, out *TypeData, desc *TypeDe
 	return newTypeData(tmpObj, temp), nil
 }
 
-func (td *TypeData) toJavaArray(arr *DmArray, index int64, l int, dType int) (interface{}, error) {
+func (sv *TypeData) toJavaArray(arr *DmArray, index int64, l int, dType int) (interface{}, error) {
 	if arr.m_objArray != nil {
 		return arr.m_objArray, nil
 	}
@@ -1261,7 +1261,7 @@ func (td *TypeData) toJavaArray(arr *DmArray, index int64, l int, dType int) (in
 	return nr, nil
 }
 
-func (td *TypeData) toNumericArray(arr *DmArray, index int64, l int, flag int) (interface{}, error) {
+func (sv *TypeData) toNumericArray(arr *DmArray, index int64, l int, flag int) (interface{}, error) {
 	if nil == arr.m_objArray {
 		return nil, nil
 	}
@@ -1305,7 +1305,7 @@ func (td *TypeData) toNumericArray(arr *DmArray, index int64, l int, flag int) (
 	return retObj, nil
 }
 
-func (td *TypeData) toJavaArrayByDmStruct(st *DmStruct) ([]interface{}, error) {
+func (sv *TypeData) toJavaArrayByDmStruct(st *DmStruct) ([]interface{}, error) {
 	attrsData := st.getAttribsTypeData()
 	if nil == st.getAttribsTypeData() || len(st.getAttribsTypeData()) <= 0 {
 		return nil, nil
@@ -1324,7 +1324,7 @@ func (td *TypeData) toJavaArrayByDmStruct(st *DmStruct) ([]interface{}, error) {
 	return out, nil
 }
 
-func (td *TypeData) toBytesFromDmArray(x *DmArray, typeDesc *TypeDescriptor) ([]byte, error) {
+func (sv *TypeData) toBytesFromDmArray(x *DmArray, typeDesc *TypeDescriptor) ([]byte, error) {
 	var err error
 	desc, err := typeDesc.getClassDescChkInfo()
 	if err != nil {
@@ -1351,14 +1351,14 @@ func (td *TypeData) toBytesFromDmArray(x *DmArray, typeDesc *TypeDescriptor) ([]
 		}
 	}
 	ret := make([]byte, ULINT_SIZE+ULINT_SIZE+len(desc)+len(data))
-	Dm_build_1331.Dm_build_1347(ret, 0, OBJ_BLOB_MAGIC)
-	Dm_build_1331.Dm_build_1347(ret, ULINT_SIZE, int32(len(desc)))
+	Dm_build_1.Dm_build_17(ret, 0, OBJ_BLOB_MAGIC)
+	Dm_build_1.Dm_build_17(ret, ULINT_SIZE, int32(len(desc)))
 	copy(ret[ULINT_SIZE+ULINT_SIZE:ULINT_SIZE+ULINT_SIZE+len(desc)], desc[:])
 	copy(ret[ULINT_SIZE+ULINT_SIZE+len(desc):ULINT_SIZE+ULINT_SIZE+len(desc)+len(data)], data[:])
 	return ret, nil
 }
 
-func (td *TypeData) toBytesFromDmStruct(x *DmStruct, typeDesc *TypeDescriptor) ([]byte, error) {
+func (sv *TypeData) toBytesFromDmStruct(x *DmStruct, typeDesc *TypeDescriptor) ([]byte, error) {
 	var err error
 	desc, err := typeDesc.getClassDescChkInfo()
 	if err != nil {
@@ -1382,8 +1382,8 @@ func (td *TypeData) toBytesFromDmStruct(x *DmStruct, typeDesc *TypeDescriptor) (
 		}
 	}
 	ret := make([]byte, ULINT_SIZE+ULINT_SIZE+len(desc)+len(data))
-	Dm_build_1331.Dm_build_1347(ret, 0, OBJ_BLOB_MAGIC)
-	Dm_build_1331.Dm_build_1347(ret, ULINT_SIZE, int32(len(desc)))
+	Dm_build_1.Dm_build_17(ret, 0, OBJ_BLOB_MAGIC)
+	Dm_build_1.Dm_build_17(ret, ULINT_SIZE, int32(len(desc)))
 	copy(ret[ULINT_SIZE+ULINT_SIZE:ULINT_SIZE+ULINT_SIZE+len(desc)], desc[:])
 	copy(ret[ULINT_SIZE+ULINT_SIZE+len(desc):ULINT_SIZE+ULINT_SIZE+len(desc)+len(data)], data[:])
 	return ret, nil

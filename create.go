@@ -58,7 +58,7 @@ func Create(db *gorm.DB) {
 						_, isZero := field.ValueOf(db.Statement.Context, db.Statement.ReflectValue)
 						setIdentityInsert = !isZero
 					case reflect.Slice, reflect.Array:
-						for i := 0; i < db.Statement.ReflectValue.Len(); i++ {
+						for i := 0; i < db.Statement.ReflectValue.Len(); {
 							obj := db.Statement.ReflectValue.Index(i)
 							if reflect.Indirect(obj).Kind() == reflect.Struct {
 								_, isZero := field.ValueOf(db.Statement.Context, db.Statement.ReflectValue.Index(i))
@@ -66,6 +66,7 @@ func Create(db *gorm.DB) {
 							}
 							break
 						}
+					default:
 					}
 
 					if setIdentityInsert && !db.DryRun && db.Error == nil {
@@ -202,6 +203,7 @@ func Create(db *gorm.DB) {
 				if isZero {
 					_ = db.AddError(db.Statement.Schema.PrioritizedPrimaryField.Set(db.Statement.Context, db.Statement.ReflectValue, insertID))
 				}
+			default:
 			}
 		}
 	}
@@ -221,7 +223,7 @@ func MergeCreate(db *gorm.DB, onConflict clause.OnConflict, values clause.Values
 		_, _ = db.Statement.WriteString(" FROM DUAL")
 	}
 
-	_, _ = db.Statement.WriteString(`) AS"excluded" (`)
+	_, _ = db.Statement.WriteString(`) AS "excluded" (`)
 	for idx, column := range values.Columns {
 		if idx > 0 {
 			_ = db.Statement.WriteByte(',')

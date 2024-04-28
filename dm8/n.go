@@ -6,6 +6,7 @@
 package dm8
 
 import (
+	"bytes"
 	"context"
 	"database/sql/driver"
 	"net"
@@ -76,6 +77,7 @@ const (
 	PortKey                  = "port"
 	UserKey                  = "user"
 	PasswordKey              = "password"
+	DialNameKey              = "dialName"
 	RwStandbyKey             = "rwStandby"
 	IsCompressKey            = "isCompress"
 	RwHAKey                  = "rwHA"
@@ -155,14 +157,16 @@ const (
 
 	LANGUAGE_EN int = 1
 
+	LANGUAGE_CNT_HK = 2
+
 	COLUMN_NAME_NATURAL_CASE = 0
 
 	COLUMN_NAME_UPPER_CASE = 1
 
 	COLUMN_NAME_LOWER_CASE = 2
 
-	compressDef   = Dm_build_773
-	compressIDDef = Dm_build_774
+	compressDef   = Dm_build_1058
+	compressIDDef = Dm_build_1059
 
 	charCodeDef = ""
 
@@ -216,7 +220,7 @@ const (
 
 	sessionTimeoutDef = 0
 
-	osAuthTypeDef = Dm_build_756
+	osAuthTypeDef = Dm_build_1041
 
 	continueBatchOnErrorDef = false
 
@@ -226,7 +230,7 @@ const (
 
 	maxRowsDef = 0
 
-	rowPrefetchDef = Dm_build_757
+	rowPrefetchDef = Dm_build_1042
 
 	bufPrefetchDef = 0
 
@@ -321,6 +325,8 @@ type DmConnector struct {
 	user string
 
 	password string
+
+	dialName string
 
 	host string
 
@@ -507,10 +513,11 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.port = int32(props.GetInt(PortKey, int(c.port), 0, 65535))
 	c.user = props.GetString(UserKey, c.user)
 	c.password = props.GetString(PasswordKey, c.password)
+	c.dialName = props.GetString(DialNameKey, "")
 	c.rwStandby = props.GetBool(RwStandbyKey, c.rwStandby)
 
 	if b := props.GetBool(IsCompressKey, false); b {
-		c.compress = Dm_build_772
+		c.compress = Dm_build_1057
 	}
 
 	c.compress = props.GetInt(CompressKey, c.compress, 0, 2)
@@ -528,6 +535,7 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.loginEncrypt = props.GetBool(LoginEncryptKey, c.loginEncrypt)
 	c.loginCertificate = props.GetTrimString(LoginCertificateKey, c.loginCertificate)
 	c.dec2Double = props.GetBool(Dec2DoubleKey, c.dec2Double)
+	parseLanguage(props.GetString(LanguageKey, ""))
 
 	c.rwSeparate = props.GetBool(RwSeparateKey, c.rwSeparate)
 	c.rwAutoDistribute = props.GetBool(RwAutoDistributeKey, c.rwAutoDistribute)
@@ -563,7 +571,7 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.autoCommit = props.GetBool(AutoCommitKey, c.autoCommit)
 	c.maxRows = props.GetInt(MaxRowsKey, c.maxRows, 0, int(INT32_MAX))
 	c.rowPrefetch = props.GetInt(RowPrefetchKey, c.rowPrefetch, 0, int(INT32_MAX))
-	c.bufPrefetch = props.GetInt(BufPrefetchKey, c.bufPrefetch, int(Dm_build_758), int(Dm_build_759))
+	c.bufPrefetch = props.GetInt(BufPrefetchKey, c.bufPrefetch, int(Dm_build_1043), int(Dm_build_1044))
 	c.lobMode = props.GetInt(LobModeKey, c.lobMode, 1, 2)
 	c.stmtPoolMaxSize = props.GetInt(StmtPoolSizeKey, c.stmtPoolMaxSize, 0, int(INT32_MAX))
 	c.ignoreCase = props.GetBool(IgnoreCaseKey, c.ignoreCase)
@@ -632,26 +640,26 @@ func (c *DmConnector) parseOsAuthType(props *Properties) error {
 	value := props.GetString(OsAuthTypeKey, "")
 	if value != "" && !util.StringUtil.IsDigit(value) {
 		if util.StringUtil.EqualsIgnoreCase(value, "ON") {
-			c.osAuthType = Dm_build_756
+			c.osAuthType = Dm_build_1041
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSDBA") {
-			c.osAuthType = Dm_build_752
+			c.osAuthType = Dm_build_1037
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSAUDITOR") {
-			c.osAuthType = Dm_build_754
+			c.osAuthType = Dm_build_1039
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSSSO") {
-			c.osAuthType = Dm_build_753
+			c.osAuthType = Dm_build_1038
 		} else if util.StringUtil.EqualsIgnoreCase(value, "AUTO") {
-			c.osAuthType = Dm_build_755
+			c.osAuthType = Dm_build_1040
 		} else if util.StringUtil.EqualsIgnoreCase(value, "OFF") {
-			c.osAuthType = Dm_build_751
+			c.osAuthType = Dm_build_1036
 		}
 	} else {
 		c.osAuthType = byte(props.GetInt(OsAuthTypeKey, int(c.osAuthType), 0, 4))
 	}
-	if c.user == "" && c.osAuthType == Dm_build_751 {
+	if c.user == "" && c.osAuthType == Dm_build_1036 {
 		c.user = "SYSDBA"
-	} else if c.osAuthType != Dm_build_751 && c.user != "" {
+	} else if c.osAuthType != Dm_build_1036 && c.user != "" {
 		return ECGO_OSAUTH_ERROR.throw()
-	} else if c.osAuthType != Dm_build_751 {
+	} else if c.osAuthType != Dm_build_1036 {
 		c.user = os.Getenv("user")
 		c.password = ""
 	}
@@ -701,25 +709,60 @@ func (c *DmConnector) parseCluster(props *Properties) {
 
 func (c *DmConnector) parseDSN(dsn string) (*Properties, string, error) {
 	var dsnProps = NewProperties()
-	dsnUrl, err := url.Parse(dsn)
+	urlParsed, err := url.Parse(dsn)
 	if err != nil {
 		return nil, "", err
 	}
-	if dsnUrl.Scheme != "dm" {
+	if urlParsed.Scheme != "dm" {
 		return nil, "", DSN_INVALID_SCHEMA
 	}
 
-	if dsnUrl.User != nil {
-		c.user = dsnUrl.User.Username()
-		c.password, _ = dsnUrl.User.Password()
+	if urlParsed.User != nil {
+		c.user = urlParsed.User.Username()
+		c.password, _ = urlParsed.User.Password()
 	}
 
-	q := dsnUrl.Query()
+	q := urlParsed.Query()
 	for k := range q {
 		dsnProps.Set(k, q.Get(k))
 	}
 
-	return dsnProps, dsnUrl.Host, nil
+	return dsnProps, urlParsed.Host, nil
+}
+
+func (c *DmConnector) BuildDSN() string {
+	var buf bytes.Buffer
+
+	buf.WriteString("dm://")
+
+	if len(c.user) > 0 {
+		buf.WriteString(url.QueryEscape(c.user))
+		if len(c.password) > 0 {
+			buf.WriteByte(':')
+			buf.WriteString(url.QueryEscape(c.password))
+		}
+		buf.WriteByte('@')
+	}
+
+	if len(c.host) > 0 {
+		buf.WriteString(c.host)
+		if c.port > 0 {
+			buf.WriteByte(':')
+			buf.WriteString(strconv.Itoa(int(c.port)))
+		}
+	}
+
+	//hasParam := false
+	if c.connectTimeout > 0 {
+		//if hasParam {
+		//	buf.WriteString("&timeout=")
+		//} else {
+		buf.WriteString("?timeout=")
+		//	hasParam = true
+		//}
+		buf.WriteString(strconv.Itoa(c.connectTimeout))
+	}
+	return buf.String()
 }
 
 func (c *DmConnector) mergeConfigs(dsn string) error {
@@ -743,15 +786,32 @@ func (c *DmConnector) mergeConfigs(dsn string) error {
 
 	c.user = c.remap(c.user, userRemapStr)
 
-	if group, ok := ServerGroupMap[strings.ToLower(host)]; ok {
-		c.group = group
+	if a := props.GetTrimString(host, ""); a != "" {
+
+		if strings.HasPrefix(a, "(") && strings.HasSuffix(a, ")") {
+			a = strings.TrimSpace(a[1 : len(a)-1])
+		}
+		c.group = parseServerName(host, a)
+		if c.group != nil {
+			c.group.props = NewProperties()
+			c.group.props.SetProperties(GlobalProperties)
+		}
+	} else if group, ok := ServerGroupMap.Load(strings.ToLower(host)); ok {
+
+		c.group = group.(*epGroup)
 	} else {
 		host, port, err := net.SplitHostPort(host)
-		if err != nil || net.ParseIP(host) == nil {
-			c.host = hostDef
-		} else {
-			c.host = host
+		if err == nil {
+			ip := net.ParseIP(host)
+			var v4InV6Prefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff}
+			if ip != nil && len(ip) == net.IPv6len && !bytes.Equal(ip[0:12], v4InV6Prefix) {
+
+				host = "[" + host + "]"
+			}
 		}
+
+		c.host = host
+
 		tmpPort, err := strconv.Atoi(port)
 		if err != nil {
 			c.port = portDef
@@ -830,7 +890,7 @@ func (c *DmConnector) connectSingle(ctx context.Context) (*DmConnection, error) 
 	dc.objId = -1
 	dc.init()
 
-	dc.Access, err = dm_build_426(dc)
+	dc.Access, err = dm_build_708(ctx, dc)
 	if err != nil {
 		return nil, err
 	}
@@ -841,7 +901,7 @@ func (c *DmConnector) connectSingle(ctx context.Context) (*DmConnection, error) 
 	}
 	defer dc.finish()
 
-	if err = dc.Access.dm_build_468(); err != nil {
+	if err = dc.Access.dm_build_753(); err != nil {
 
 		if !dc.closed.IsSet() {
 			close(dc.closech)

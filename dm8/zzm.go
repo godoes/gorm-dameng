@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/godoes/gorm-dameng/dm8/util"
 )
@@ -53,9 +54,11 @@ const (
 
 	ENCODING_GB18030 string = "GB18030"
 
+	ENCODING_BIG5 string = "BIG5"
+
 	DbAliveCheckFreqDef = 0
 
-	LocaleDef = 0
+	LocaleDef = LANGUAGE_CN
 
 	// log
 
@@ -117,7 +120,7 @@ var (
 
 	/*---------------------------------------------------------------*/
 
-	ServerGroupMap = make(map[string]*epGroup)
+	ServerGroupMap sync.Map
 
 	GlobalProperties = NewProperties()
 )
@@ -160,15 +163,15 @@ func load(filePath string) {
 
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			groupName := strings.ToLower(line[1 : len(line)-1])
-			dbGroup, ok := ServerGroupMap[groupName]
+			dbGroup, ok := ServerGroupMap.Load(groupName)
 			if groupName == "" || !ok {
 				continue
 			}
-			groupProps = dbGroup.props
+			groupProps = dbGroup.(*epGroup).props
 			if groupProps.IsNil() {
 				groupProps = NewProperties()
 				groupProps.SetProperties(GlobalProperties)
-				dbGroup.props = groupProps
+				dbGroup.(*epGroup).props = groupProps
 			}
 
 		} else {
@@ -186,7 +189,7 @@ func load(filePath string) {
 			}
 			// 区分属性是全局的还是组的
 			var success bool
-			if groupProps.IsNil() {
+			if groupProps == nil || groupProps.IsNil() {
 				success = SetServerGroupProperties(GlobalProperties, key, value)
 			} else {
 				success = SetServerGroupProperties(groupProps, key, value)
@@ -196,7 +199,7 @@ func load(filePath string) {
 				if serverGroup != nil {
 					serverGroup.props = NewProperties()
 					serverGroup.props.SetProperties(GlobalProperties)
-					ServerGroupMap[strings.ToLower(key)] = serverGroup
+					ServerGroupMap.Store(strings.ToLower(key), serverGroup)
 				}
 			}
 		}
@@ -204,130 +207,139 @@ func load(filePath string) {
 }
 
 func SetServerGroupProperties(props *Properties, key string, value string) bool {
-	if util.StringUtil.EqualsIgnoreCase(key, "ADDRESS_REMAP") {
+	key = strings.ToUpper(key)
+	if key == "ADDRESS_REMAP" {
 		tmp := props.GetString(AddressRemapKey, "")
 		props.Set(AddressRemapKey, tmp+"("+value+")")
-	} else if util.StringUtil.EqualsIgnoreCase(key, "ALWAYS_ALLOW_COMMIT") {
+	} else if key == "ALWAYS_ALLOW_COMMIT" {
 		props.Set(AlwayseAllowCommitKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "APP_NAME") {
+	} else if key == "APP_NAME" {
 		props.Set(AppNameKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "AUTO_COMMIT") {
+	} else if key == "AUTO_COMMIT" {
 		props.Set(AutoCommitKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "BATCH_ALLOW_MAX_ERRORS") {
+	} else if key == "BATCH_ALLOW_MAX_ERRORS" {
 		props.Set(BatchAllowMaxErrorsKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "BATCH_CONTINUE_ON_ERROR") ||
-		util.StringUtil.EqualsIgnoreCase(key, "CONTINUE_BATCH_ON_ERROR") {
+	} else if key == "BATCH_CONTINUE_ON_ERROR" ||
+		key == "CONTINUE_BATCH_ON_ERROR" {
 		props.Set(ContinueBatchOnErrorKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "BATCH_NOT_ON_CALL") {
+	} else if key == "BATCH_NOT_ON_CALL" {
 		props.Set(BatchNotOnCallKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "BATCH_TYPE") {
+	} else if key == "BATCH_TYPE" {
 		props.Set(BatchTypeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "BUF_PREFETCH") {
+	} else if key == "BUF_PREFETCH" {
 		props.Set(BufPrefetchKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "CIPHER_PATH") {
+	} else if key == "CIPHER_PATH" {
 		props.Set(CipherPathKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "CLUSTER") {
+	} else if key == "CLUSTER" {
 		props.Set(ClusterKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "COLUMN_NAME_UPPER_CASE") {
+	} else if key == "COLUMN_NAME_UPPER_CASE" {
 		props.Set(ColumnNameUpperCaseKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "COLUMN_NAME_CASE") {
+	} else if key == "COLUMN_NAME_CASE" {
 		props.Set(ColumnNameCaseKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "COMPATIBLE_MODE") {
+	} else if key == "COMPATIBLE_MODE" {
 		props.Set(CompatibleModeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "COMPRESS") ||
-		util.StringUtil.EqualsIgnoreCase(key, "COMPRESS_MSG") {
+	} else if key == "COMPRESS" ||
+		key == "COMPRESS_MSG" {
 		props.Set(CompressKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "COMPRESS_ID") {
+	} else if key == "COMPRESS_ID" {
 		props.Set(CompressIdKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "CONNECT_TIMEOUT") {
+	} else if key == "CONNECT_TIMEOUT" {
 		props.Set(ConnectTimeoutKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "DO_SWITCH") ||
-		util.StringUtil.EqualsIgnoreCase(key, "AUTO_RECONNECT") {
+	} else if key == "DO_SWITCH" ||
+		key == "AUTO_RECONNECT" {
 		props.Set(DoSwitchKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "ENABLE_RS_CACHE") {
+	} else if key == "ENABLE_RS_CACHE" {
 		props.Set(EnRsCacheKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "EP_SELECTION") {
+	} else if key == "EP_SELECTION" {
 		props.Set(EpSelectorKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "ESCAPE_PROCESS") {
+	} else if key == "ESCAPE_PROCESS" {
 		props.Set(EscapeProcessKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "IS_BDTA_RS") {
+	} else if key == "IS_BDTA_RS" {
 		props.Set(IsBdtaRSKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "KEY_WORDS") ||
-		util.StringUtil.EqualsIgnoreCase(key, "KEYWORDS") {
+	} else if key == "KEY_WORDS" ||
+		key == "KEYWORDS" {
 		props.Set(KeywordsKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LANGUAGE") {
+	} else if key == "LANGUAGE" {
 		props.Set(LanguageKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOB_MODE") {
+	} else if key == "LOB_MODE" {
 		props.Set(LobModeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOG_DIR") {
+	} else if key == "LOG_BUFFER_SIZE" {
+		props.Set(LogBufferSizeKey, value)
+	} else if key == "LOG_DIR" {
 		props.Set(LogDirKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOG_FLUSH_FREQ") {
+	} else if key == "LOG_FLUSH_FREQ" {
 		props.Set(LogFlushFreqKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOG_LEVEL") {
+	} else if key == "LOG_FLUSHER_QUEUESIZE" {
+		props.Set(LogFlusherQueueSizeKey, value)
+	} else if key == "LOG_LEVEL" {
 		props.Set(LogLevelKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOGIN_DSC_CTRL") {
+	} else if key == "LOGIN_DSC_CTRL" {
 		props.Set(LoginDscCtrlKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOGIN_ENCRYPT") {
+	} else if key == "LOGIN_ENCRYPT" {
 		props.Set(LoginEncryptKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOGIN_MODE") {
+	} else if key == "LOGIN_MODE" {
 		props.Set(LoginModeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "LOGIN_STATUS") {
+	} else if key == "LOGIN_STATUS" {
 		props.Set(LoginStatusKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "MAX_ROWS") {
+	} else if key == "MAX_ROWS" {
 		props.Set(MaxRowsKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "MPP_LOCAL") {
+	} else if key == "MPP_LOCAL" {
 		props.Set(MppLocalKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "OS_NAME") {
+	} else if key == "OS_NAME" {
 		props.Set(OsNameKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RS_CACHE_SIZE") {
+	} else if key == "RS_CACHE_SIZE" {
 		props.Set(RsCacheSizeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RS_REFRESH_FREQ") {
+	} else if key == "RS_REFRESH_FREQ" {
 		props.Set(RsRefreshFreqKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RW_HA") {
+	} else if key == "RW_HA" {
 		props.Set(RwHAKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RW_IGNORE_SQL") {
+	} else if key == "RW_IGNORE_SQL" {
 		props.Set(RwIgnoreSqlKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RW_PERCENT") {
+	} else if key == "RW_PERCENT" {
 		props.Set(RwPercentKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RW_SEPARATE") {
+	} else if key == "RW_SEPARATE" {
 		props.Set(RwSeparateKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "RW_STANDBY_RECOVER_TIME") {
+	} else if key == "RW_STANDBY_RECOVER_TIME" {
 		props.Set(RwStandbyRecoverTimeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SCHEMA") {
+	} else if key == "SCHEMA" {
 		props.Set(SchemaKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SESS_ENCODE") {
+	} else if key == "SESS_ENCODE" {
 		if IsSupportedCharset(value) {
 			props.Set("sessEncode", value)
 		}
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SESSION_TIMEOUT") {
+	} else if key == "SESSION_TIMEOUT" {
 		props.Set(SessionTimeoutKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SOCKET_TIMEOUT") {
+	} else if key == "SOCKET_TIMEOUT" {
 		props.Set(SocketTimeoutKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SSL_FILES_PATH") {
+	} else if key == "SSL_CERT_PATH" {
+		props.Set(SslCertPathKey, value)
+	} else if key == "SSL_FILES_PATH" {
 		props.Set(SslFilesPathKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_DIR") {
+	} else if key == "SSL_KEY_PATH" {
+		props.Set(SslKeyPathKey, value)
+	} else if key == "STAT_DIR" {
 		props.Set(StatDirKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_ENABLE") {
+	} else if key == "STAT_ENABLE" {
 		props.Set(StatEnableKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_FLUSH_FREQ") {
+	} else if key == "STAT_FLUSH_FREQ" {
 		props.Set(StatFlushFreqKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_HIGH_FREQ_SQL_COUNT") {
+	} else if key == "STAT_HIGH_FREQ_SQL_COUNT" {
 		props.Set(StatHighFreqSqlCountKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_SLOW_SQL_COUNT") {
+	} else if key == "STAT_SLOW_SQL_COUNT" {
 		props.Set(StatSlowSqlCountKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_SQL_MAX_COUNT") {
+	} else if key == "STAT_SQL_MAX_COUNT" {
 		props.Set(StatSqlMaxCountKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "STAT_SQL_REMOVE_MODE") {
+	} else if key == "STAT_SQL_REMOVE_MODE" {
 		props.Set(StatSqlRemoveModeKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SWITCH_INTERVAL") {
+	} else if key == "SWITCH_INTERVAL" {
 		props.Set(SwitchIntervalKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "SWITCH_TIME") ||
-		util.StringUtil.EqualsIgnoreCase(key, "SWITCH_TIMES") {
+	} else if key == "SWITCH_TIME" ||
+		key == "SWITCH_TIMES" {
 		props.Set(SwitchTimesKey, value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "TIME_ZONE") {
+	} else if key == "TIME_ZONE" {
 		props.Set(TimeZoneKey, value)
 		props.Set("localTimezone", value)
-	} else if util.StringUtil.EqualsIgnoreCase(key, "USER_REMAP") {
+	} else if key == "USER_REMAP" {
 		tmp := props.GetString(UserRemapKey, "")
 		props.Set(UserRemapKey, tmp+"("+value+")")
 	} else {
@@ -414,11 +426,18 @@ func parseLanguage(value string) {
 		Locale = 0
 	} else if util.StringUtil.EqualsIgnoreCase("en", value) {
 		Locale = 1
+	} else if util.StringUtil.EqualsIgnoreCase("cnt_hk", value) ||
+		util.StringUtil.EqualsIgnoreCase("hk", value) ||
+		util.StringUtil.EqualsIgnoreCase("tw", value) {
+		Locale = 2
 	}
 }
 
 func IsSupportedCharset(charset string) bool {
-	if util.StringUtil.EqualsIgnoreCase(ENCODING_UTF8, charset) || util.StringUtil.EqualsIgnoreCase(ENCODING_GB18030, charset) || util.StringUtil.EqualsIgnoreCase(ENCODING_EUCKR, charset) {
+	if util.StringUtil.EqualsIgnoreCase(ENCODING_UTF8, charset) ||
+		util.StringUtil.EqualsIgnoreCase(ENCODING_GB18030, charset) ||
+		util.StringUtil.EqualsIgnoreCase(ENCODING_EUCKR, charset) ||
+		util.StringUtil.EqualsIgnoreCase(ENCODING_BIG5, charset) {
 		return true
 	}
 	return false

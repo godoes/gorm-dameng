@@ -473,6 +473,7 @@ type sqlStat struct {
 	DataSourceId string
 }
 
+//goland:noinspection GoExportedFuncWithUnexportedType
 func NewSqlStat(sql string) *sqlStat {
 	s := new(sqlStat)
 	s.Sql = sql
@@ -1077,6 +1078,7 @@ func (cs *connectionStat) createSqlStat(sql string) *sqlStat {
 
 }
 
+//goland:noinspection GoBoolExpressions
 func (cs *connectionStat) putSqlStat(sqlStat *sqlStat) bool {
 	if cs.maxSqlSize > 0 && len(cs.sqlStatMap) == cs.maxSqlSize {
 		if StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
@@ -1098,6 +1100,7 @@ func (cs *connectionStat) putSqlStat(sqlStat *sqlStat) bool {
 	}
 }
 
+//goland:noinspection GoBoolExpressions
 func (cs *connectionStat) eliminateSqlStat() *sqlStat {
 	if cs.maxSqlSize > 0 && len(cs.sqlStatMap) == cs.maxSqlSize {
 		if StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
@@ -1603,7 +1606,7 @@ func (sr *StatReader) service(url string, params *Properties) []map[string]inter
 	}
 }
 
-func (sr *StatReader) getSqlStatList(params *Properties) []map[string]interface{} {
+func (sr *StatReader) getSqlStatList(_ *Properties) []map[string]interface{} {
 	array := make([]map[string]interface{}, 0)
 	connStatMap := goStat.getConnStatMap()
 	var sqlStatMap map[string]*sqlStat
@@ -1857,9 +1860,9 @@ func (sr *StatReader) comparatorOrderBy(array []map[string]interface{}, params *
 
 	if len(array) > 0 {
 
-		if orderBy != "" {
-			sort.Sort(newMapSlice(array, !(DEFAULT_ORDER_TYPE == orderType), orderBy))
-		}
+		//if orderBy != "" {
+		sort.Sort(newMapSlice(array, !(DEFAULT_ORDER_TYPE == orderType), orderBy))
+		//}
 
 		fromIndex := (pageNum - 1) * pageSize
 
@@ -2033,7 +2036,7 @@ type statFlusher struct {
 	flushFreq  int
 	filePath   string
 	filePrefix string
-	buffer     *Dm_build_0
+	buffer     *Dm_build_282
 }
 
 func newStatFlusher() *statFlusher {
@@ -2044,7 +2047,7 @@ func newStatFlusher() *statFlusher {
 	sf.flushFreq = StatFlushFreq
 	sf.filePath = StatDir
 	sf.filePrefix = "dm_go_stat"
-	sf.buffer = Dm_build_4()
+	sf.buffer = Dm_build_286()
 	return sf
 }
 
@@ -2106,25 +2109,25 @@ func (sf *statFlusher) writeAndFlush(logs []string, startOff int, l int) {
 	for i := startOff; i < startOff+l; i++ {
 		bytes = []byte(logs[i] + util.StringUtil.LineSeparator())
 
-		sf.buffer.Dm_build_26(bytes, 0, len(bytes))
+		sf.buffer.Dm_build_308(bytes, 0, len(bytes))
 
-		if sf.buffer.Dm_build_5() >= FLUSH_SIZE {
+		if sf.buffer.Dm_build_287() >= FLUSH_SIZE {
 			sf.doFlush(sf.buffer)
 		}
 	}
 
-	if sf.buffer.Dm_build_5() > 0 {
+	if sf.buffer.Dm_build_287() > 0 {
 		sf.doFlush(sf.buffer)
 	}
 }
 
-func (sf *statFlusher) doFlush(buffer *Dm_build_0) {
+func (sf *statFlusher) doFlush(buffer *Dm_build_282) {
 	if sf.needCreateNewFile() {
 		sf.closeCurrentFile()
 		sf.logFile = sf.createNewFile()
 	}
 	if sf.logFile != nil {
-		buffer.Dm_build_20(sf.logFile, buffer.Dm_build_5())
+		buffer.Dm_build_302(sf.logFile, buffer.Dm_build_287())
 	}
 }
 func (sf *statFlusher) closeCurrentFile() {
