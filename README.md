@@ -81,7 +81,7 @@ func main() {
 
 - 产品手册：<https://eco.dameng.com/document/dm/zh-cn/pm/>
 - 常见问题：<https://eco.dameng.com/document/dm/zh-cn/faq/>
-- GO 数据库接口：<https://eco.dameng.com/document/dm/zh-cn/app-dev/go_go.html>
+- GO DM 接口：<https://eco.dameng.com/document/dm/zh-cn/app-dev/go_dm.html>
 - DM Go 编程指南：<https://eco.dameng.com/document/dm/zh-cn/pm/go-rogramming-guide.html>
 - SQL 开发指南：<https://eco.dameng.com/document/dm/zh-cn/sql-dev/>
 
