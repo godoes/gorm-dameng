@@ -99,6 +99,12 @@ func TestGormConnExample(t *testing.T) {
 	} else {
 		t.Logf("迁移表结构成功！")
 	}
+	// 测试重新迁移 schema
+	if err = db.AutoMigrate(&Product{}); err != nil {
+		t.Errorf("迁移表结构失败：%v", err)
+	} else {
+		t.Logf("迁移表结构成功！")
+	}
 
 	// Create
 	data := Product{Code: "D42", Price: 100, Remark1: "VARCHAR", Remark2: "CLOB"}
