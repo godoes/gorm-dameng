@@ -9,15 +9,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestMigrator_AutoMigrate(t *testing.T) {
-	options := map[string]string{
+var (
+	dsnOptions = map[string]string{
 		"schema":         dmSchema,
 		"appName":        "dm_TestMigrator",
 		"connectTimeout": "30000",
 	}
+)
+
+func TestMigrator_AutoMigrate(t *testing.T) {
 	db, err := gorm.Open(New(Config{
 		DriverName:              DriverName,
-		DSN:                     BuildUrl(dmUsername, dmPassword, dmHost, dmPort, options),
+		DSN:                     BuildUrl(dmUsername, dmPassword, dmHost, dmPort, dsnOptions),
 		VarcharSizeIsCharLength: true,
 	}))
 	if err != nil {
@@ -193,4 +196,65 @@ type testTableColumnTypeModel struct {
 
 func (t testTableColumnTypeModel) TableName() string {
 	return "test_table_column_type"
+}
+
+type TestTableFieldComment struct {
+	ID   string `gorm:"column:id;primaryKey"`
+	Name string `gorm:"column:name;comment:姓名"`
+	Age  uint   `gorm:"column:age;comment:年龄"`
+}
+
+func (*TestTableFieldComment) TableName() string { return "test_table_field_comment" }
+
+type TestTableFieldCommentUpdate struct {
+	ID       string     `gorm:"column:id;primaryKey"`
+	Name     string     `gorm:"column:name;comment:姓名"`
+	Age      uint       `gorm:"column:age;comment:周岁"`
+	Birthday *time.Time `gorm:"column:birthday;comment:生日"`
+}
+
+func (*TestTableFieldCommentUpdate) TableName() string { return "test_table_field_comment" }
+
+func TestMigrator_MigrateColumnComment(t *testing.T) {
+	dsn := BuildUrl(dmUsername, dmPassword, dmHost, dmPort, dsnOptions)
+	db, err := gorm.Open(New(Config{DriverName: DriverName, DSN: dsn}))
+	if err != nil {
+		t.Error(err)
+	}
+	migrator := db.Debug().Migrator()
+
+	tableModel := new(TestTableFieldComment)
+	defer func() {
+		if err = migrator.DropTable(tableModel); err != nil {
+			t.Errorf("couldn't drop table %q, got error: %v", tableModel.TableName(), err)
+		}
+	}()
+
+	if err = migrator.AutoMigrate(tableModel); err != nil {
+		t.Fatal(err)
+	}
+	tableModelUpdate := new(TestTableFieldCommentUpdate)
+	if err = migrator.AutoMigrate(tableModelUpdate); err != nil {
+		t.Error(err)
+	}
+
+	if m, ok := migrator.(Migrator); ok {
+		stmt := db.Model(tableModelUpdate).Find(nil).Statement
+		if stmt == nil || stmt.Schema == nil {
+			t.Fatal("expected Statement.Schema, got nil")
+		}
+
+		wantComments := []string{"", "姓名", "周岁", "生日"}
+		gotComments := make([]string, len(stmt.Schema.DBNames))
+
+		for i, fieldDBName := range stmt.Schema.DBNames {
+			comment := m.GetColumnComment(stmt, fieldDBName)
+			gotComments[i] = comment
+		}
+
+		if !reflect.DeepEqual(wantComments, gotComments) {
+			t.Fatalf("expected comments %#v, got %#v", wantComments, gotComments)
+		}
+		t.Logf("got comments: %#v", gotComments)
+	}
 }

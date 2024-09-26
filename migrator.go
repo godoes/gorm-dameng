@@ -8,6 +8,7 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/migrator"
 	"gorm.io/gorm/schema"
 )
@@ -98,7 +99,36 @@ func (m Migrator) CreateTable(values ...interface{}) error {
 		}
 	}
 	// super
-	return m.Migrator.CreateTable(values...)
+	if err := m.Migrator.CreateTable(values...); err != nil {
+		return err
+	}
+	// comment on column
+	for _, value := range m.ReorderModels(values, false) {
+		if err := m.RunWithValue(value, func(stmt *gorm.Statement) error {
+			if stmt.Schema != nil {
+				for _, fieldName := range stmt.Schema.DBNames {
+					field := stmt.Schema.FieldsByDBName[fieldName]
+					if field.Comment != "" {
+						if e := m.setColumnComment(stmt, field); e != nil {
+							return e
+						}
+					}
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m Migrator) setColumnComment(stmt *gorm.Statement, field *schema.Field) error {
+	return m.DB.Exec(
+		"COMMENT ON COLUMN ?.? IS ?",
+		m.CurrentTable(stmt), clause.Column{Name: field.DBName},
+		gorm.Expr(m.Migrator.Dialector.Explain("?", field.Comment)),
+	).Error
 }
 
 //goland:noinspection SqlNoDataSourceInspection
@@ -148,9 +178,24 @@ WHERE TABS.SCHID = SCHEMAS.ID AND SF_CHECK_PRIV_OPT(UID(), CURRENT_USERTYPE(), T
 	return
 }
 
-func (m Migrator) AddColumn(dst interface{}, field string) error {
+func (m Migrator) AddColumn(value interface{}, name string) error {
 	// super
-	return m.Migrator.AddColumn(dst, field)
+	if err := m.Migrator.AddColumn(value, name); err != nil {
+		return err
+	}
+
+	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
+		if stmt.Schema != nil {
+			if field := stmt.Schema.LookUpField(name); field != nil {
+				if field.Comment != "" {
+					if e := m.setColumnComment(stmt, field); e != nil {
+						return e
+					}
+				}
+			}
+		}
+		return nil
+	})
 }
 
 func (m Migrator) DropColumn(dst interface{}, field string) error {
@@ -194,7 +239,21 @@ func (m Migrator) alterColumn(value interface{}, field string, containsUnique bo
 	})
 }
 
-func (m Migrator) MigrateColumn(dst interface{}, field *schema.Field, columnType gorm.ColumnType) error {
+func (m Migrator) GetColumnComment(stmt *gorm.Statement, fieldDBName string) (description string) {
+	queryTx := m.DB.Session(&gorm.Session{Logger: m.DB.Logger.LogMode(logger.Warn)})
+	if m.DB.DryRun {
+		queryTx.DryRun = false
+	}
+	var comment sql.NullString
+	queryTx.Raw("SELECT COMMENTS FROM ALL_COL_COMMENTS WHERE SCHEMA_NAME = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+		m.CurrentDatabase(), stmt.Table, fieldDBName).Scan(&comment)
+	if comment.Valid {
+		description = comment.String
+	}
+	return
+}
+
+func (m Migrator) MigrateColumn(value interface{}, field *schema.Field, columnType gorm.ColumnType) error {
 	// super
 	// return m.Migrator.MigrateColumn(dst, field, columnType)
 	// bug629968 不再使用父类默认的MigrateColumn函数，主要修改：
@@ -276,7 +335,7 @@ func (m Migrator) MigrateColumn(dst interface{}, field *schema.Field, columnType
 		currentDefaultNotNull := field.HasDefaultValue && (field.DefaultValueInterface != nil || !strings.EqualFold(field.DefaultValue, "NULL"))
 		dv, dvNotNull := columnType.DefaultValue()
 		if dvNotNull && !currentDefaultNotNull {
-			// defalut value -> null
+			// default value -> null
 			alterColumn = true
 		} else if !dvNotNull && currentDefaultNotNull {
 			// null -> default value
@@ -300,10 +359,20 @@ func (m Migrator) MigrateColumn(dst interface{}, field *schema.Field, columnType
 	}
 
 	if alterColumn && !field.IgnoreMigration {
-		return m.DB.Migrator().(Migrator).alterColumn(dst, field.DBName, containsUnique)
+		if err := m.DB.Migrator().(Migrator).alterColumn(value, field.DBName, containsUnique); err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
+		description := m.GetColumnComment(stmt, field.DBName)
+		if field.Comment != description {
+			if e := m.setColumnComment(stmt, field); e != nil {
+				return e
+			}
+		}
+		return nil
+	})
 }
 
 func (m Migrator) HasColumn(value interface{}, field string) bool {
@@ -331,11 +400,15 @@ func (m Migrator) ColumnTypes(dst interface{}) ([]gorm.ColumnType, error) {
 		var (
 			currentDatabase = m.CurrentDatabase()
 			table           = stmt.Table
-			columnTypeSQL   = `SELECT /*+ MAX_OPT_N_TABLES(5) */ COLS.NAME, COLS.DEFVAL FROM
+
+			columnTypeSQL = `SELECT /*+ MAX_OPT_N_TABLES(5) */ COLS.NAME, COLS.DEFVAL, COMS.COMMENTS FROM
 (SELECT ID FROM SYS.SYSOBJECTS WHERE TYPE$ = 'SCH' AND NAME = ?) SCHS,
 (SELECT ID, SCHID FROM SYS.SYSOBJECTS WHERE TYPE$ = 'SCHOBJ' AND SUBTYPE$ IN ('UTAB', 'STAB', 'VIEW') AND NAME = ?) TABS,
+(SELECT SCHEMA_NAME, TABLE_NAME, COLUMN_NAME, COMMENTS FROM SYS.ALL_COL_COMMENTS WHERE SCHEMA_NAME = ? AND TABLE_NAME = ?) COMS,
 SYS.SYSCOLUMNS COLS
-WHERE TABS.ID=COLS.ID AND SCHS.ID = TABS.SCHID`
+WHERE TABS.ID=COLS.ID AND SCHS.ID = TABS.SCHID AND COMS.COLUMN_NAME = COLS.NAME`
+			columnTypeValues = []interface{}{currentDatabase, table, currentDatabase, table}
+
 			columnConsSQL = `SELECT /*+ MAX_OPT_N_TABLES(5) */ COLS.NAME, LNNVL(CONS.TYPE$!='P'), LNNVL(CONS.TYPE$!='U') FROM
 (SELECT ID FROM SYS.SYSOBJECTS WHERE TYPE$ = 'SCH' AND NAME = ?) SCHS,
 (SELECT ID, SCHID FROM SYS.SYSOBJECTS WHERE TYPE$ = 'SCHOBJ' AND SUBTYPE$ IN ('UTAB', 'STAB', 'VIEW') AND NAME = ?) TABS,
@@ -382,7 +455,7 @@ WHERE SCHS.ID=TABS.SCHID AND TABS.ID=COLS.ID AND COLS.ID=CONS.TABLEID and CONS.I
 		}
 
 		// 列信息
-		columns, rowErr := m.DB.Table(table).Raw(columnTypeSQL, currentDatabase, table).Rows()
+		columns, rowErr := m.DB.Table(table).Raw(columnTypeSQL, columnTypeValues...).Rows()
 		if rowErr != nil {
 			return rowErr
 		}
@@ -394,7 +467,7 @@ WHERE SCHS.ID=TABS.SCHID AND TABS.ID=COLS.ID AND COLS.ID=CONS.TABLEID and CONS.I
 			var (
 				column migrator.ColumnType
 				values = []interface{}{
-					&column.NameValue, &column.DefaultValueValue,
+					&column.NameValue, &column.DefaultValueValue, &column.CommentValue,
 				}
 			)
 
