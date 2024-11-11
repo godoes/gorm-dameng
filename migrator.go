@@ -63,14 +63,17 @@ func (m Migrator) CurrentDatabase() (name string) {
 }
 
 func (m Migrator) FullDataTypeOf(field *schema.Field) clause.Expr {
-	expr := m.Migrator.FullDataTypeOf(field)
-
+	// super
+	return m.Migrator.FullDataTypeOf(field)
 	// https://eco.dameng.com/community/question/2966fa8cdb97f9444dd80afb78d7c9a6
+	// bug646499 moved to CreateTable()/AddColumn()/AlterColumn()/MigrateColumn()
+	//expr := m.Migrator.FullDataTypeOf(field)
+	//
 	//if value, ok := field.TagSettings["COMMENT"]; ok {
 	//	expr.SQL += " COMMENT " + m.Dialector.Explain("?", value)
 	//}
-
-	return expr
+	//
+	//return expr
 }
 
 func (m Migrator) GetTypeAliases(databaseTypeName string) []string {
@@ -102,16 +105,14 @@ func (m Migrator) CreateTable(values ...interface{}) error {
 	if err := m.Migrator.CreateTable(values...); err != nil {
 		return err
 	}
-	// comment on column
+	// 添加列注释
 	for _, value := range m.ReorderModels(values, false) {
 		if err := m.RunWithValue(value, func(stmt *gorm.Statement) error {
 			if stmt.Schema != nil {
 				for _, fieldName := range stmt.Schema.DBNames {
 					field := stmt.Schema.FieldsByDBName[fieldName]
-					if field.Comment != "" {
-						if e := m.setColumnComment(stmt, field); e != nil {
-							return e
-						}
+					if err := m.alterColumnComment(stmt, field); err != nil {
+						return err
 					}
 				}
 			}
@@ -123,15 +124,6 @@ func (m Migrator) CreateTable(values ...interface{}) error {
 	return nil
 }
 
-func (m Migrator) setColumnComment(stmt *gorm.Statement, field *schema.Field) error {
-	return m.DB.Exec(
-		"COMMENT ON COLUMN ?.? IS ?",
-		m.CurrentTable(stmt), clause.Column{Name: field.DBName},
-		gorm.Expr(m.Migrator.Dialector.Explain("?", field.Comment)),
-	).Error
-}
-
-//goland:noinspection SqlNoDataSourceInspection
 func (m Migrator) DropTable(values ...interface{}) error {
 	values = m.ReorderModels(values, false)
 	for i := len(values) - 1; i >= 0; i-- {
@@ -178,19 +170,18 @@ WHERE TABS.SCHID = SCHEMAS.ID AND SF_CHECK_PRIV_OPT(UID(), CURRENT_USERTYPE(), T
 	return
 }
 
-func (m Migrator) AddColumn(value interface{}, name string) error {
+func (m Migrator) AddColumn(dst interface{}, field string) error {
 	// super
-	if err := m.Migrator.AddColumn(value, name); err != nil {
+	if err := m.Migrator.AddColumn(dst, field); err != nil {
 		return err
 	}
 
-	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
+	// 修改列注释
+	return m.RunWithValue(dst, func(stmt *gorm.Statement) error {
 		if stmt.Schema != nil {
-			if field := stmt.Schema.LookUpField(name); field != nil {
-				if field.Comment != "" {
-					if e := m.setColumnComment(stmt, field); e != nil {
-						return e
-					}
+			if field := stmt.Schema.LookUpField(field); field != nil {
+				if err := m.alterColumnComment(stmt, field); err != nil {
+					return err
 				}
 			}
 		}
@@ -203,7 +194,6 @@ func (m Migrator) DropColumn(dst interface{}, field string) error {
 	return m.Migrator.DropColumn(dst, field)
 }
 
-//goland:noinspection SqlNoDataSourceInspection
 func (m Migrator) AlterColumn(value interface{}, field string) error {
 	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
 		if field := stmt.Schema.LookUpField(field); field != nil {
@@ -251,6 +241,21 @@ func (m Migrator) GetColumnComment(stmt *gorm.Statement, fieldDBName string) (de
 		description = comment.String
 	}
 	return
+}
+
+// 修改列注释 sql: COMMENT ON COLUMN T.C IS XXX
+func (m Migrator) alterColumnComment(stmt *gorm.Statement, field *schema.Field) error {
+	if field.Comment != "" {
+		if err := m.DB.Exec(
+			"COMMENT ON COLUMN ?.? IS ?",
+			m.CurrentTable(stmt),
+			clause.Column{Name: field.DBName},
+			gorm.Expr(m.Migrator.Dialector.Explain("?", field.Comment)),
+		).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m Migrator) MigrateColumn(value interface{}, field *schema.Field, columnType gorm.ColumnType) error {
@@ -367,7 +372,7 @@ func (m Migrator) MigrateColumn(value interface{}, field *schema.Field, columnTy
 	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
 		description := m.GetColumnComment(stmt, field.DBName)
 		if field.Comment != description {
-			if e := m.setColumnComment(stmt, field); e != nil {
+			if e := m.alterColumnComment(stmt, field); e != nil {
 				return e
 			}
 		}

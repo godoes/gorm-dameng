@@ -540,7 +540,7 @@ type amElement struct {
 	OracleDateFormat *oracleDateFormat
 }
 
-func (AMElement amElement) parse(str string, offset int, dt []int) (int, error) {
+func (AMElement amElement) parse(str string, offset int, _ []int) (int, error) {
 	runeStr := ([]rune(str))[offset : offset+2]
 
 	if AMElement.OracleDateFormat.language == LANGUAGE_CN {

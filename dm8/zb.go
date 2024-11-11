@@ -84,6 +84,8 @@ type execRetInfo struct {
 	retSqlType int16 // 执行返回的语句类型
 
 	execId int32
+
+	serverParams []parameter
 }
 
 type column struct {

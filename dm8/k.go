@@ -47,20 +47,20 @@ func newBlobFromDB(value []byte, conn *DmConnection, column *column, fetchAll bo
 	blob.tabId = column.lobTabId
 	blob.colId = column.lobColId
 
-	blob.inRow = Dm_build_1.Dm_build_94(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
-	blob.blobId = Dm_build_1.Dm_build_108(value, NBLOB_HEAD_BLOBID)
+	blob.inRow = Dm_build_931.Dm_build_1024(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
+	blob.blobId = Dm_build_931.Dm_build_1038(value, NBLOB_HEAD_BLOBID)
 	if !blob.inRow {
-		blob.groupId = Dm_build_1.Dm_build_98(value, NBLOB_HEAD_OUTROW_GROUPID)
-		blob.fileId = Dm_build_1.Dm_build_98(value, NBLOB_HEAD_OUTROW_FILEID)
-		blob.pageNo = Dm_build_1.Dm_build_103(value, NBLOB_HEAD_OUTROW_PAGENO)
+		blob.groupId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_GROUPID)
+		blob.fileId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_FILEID)
+		blob.pageNo = Dm_build_931.Dm_build_1033(value, NBLOB_HEAD_OUTROW_PAGENO)
 	}
 	if conn.NewLobFlag {
-		blob.tabId = Dm_build_1.Dm_build_103(value, NBLOB_EX_HEAD_TABLE_ID)
-		blob.colId = Dm_build_1.Dm_build_98(value, NBLOB_EX_HEAD_COL_ID)
-		blob.rowId = Dm_build_1.Dm_build_108(value, NBLOB_EX_HEAD_ROW_ID)
-		blob.exGroupId = Dm_build_1.Dm_build_98(value, NBLOB_EX_HEAD_FPA_GRPID)
-		blob.exFileId = Dm_build_1.Dm_build_98(value, NBLOB_EX_HEAD_FPA_FILEID)
-		blob.exPageNo = Dm_build_1.Dm_build_103(value, NBLOB_EX_HEAD_FPA_PAGENO)
+		blob.tabId = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_TABLE_ID)
+		blob.colId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_COL_ID)
+		blob.rowId = Dm_build_931.Dm_build_1038(value, NBLOB_EX_HEAD_ROW_ID)
+		blob.exGroupId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_GRPID)
+		blob.exFileId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_FILEID)
+		blob.exPageNo = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_FPA_PAGENO)
 	}
 	blob.resetCurrentInfo()
 
@@ -68,9 +68,9 @@ func newBlobFromDB(value []byte, conn *DmConnection, column *column, fetchAll bo
 	if blob.inRow {
 		blob.data = make([]byte, blob.length)
 		if conn.NewLobFlag {
-			Dm_build_1.Dm_build_57(blob.data, 0, value, NBLOB_EX_HEAD_SIZE, len(blob.data))
+			Dm_build_931.Dm_build_987(blob.data, 0, value, NBLOB_EX_HEAD_SIZE, len(blob.data))
 		} else {
-			Dm_build_1.Dm_build_57(blob.data, 0, value, NBLOB_INROW_HEAD_SIZE, len(blob.data))
+			Dm_build_931.Dm_build_987(blob.data, 0, value, NBLOB_INROW_HEAD_SIZE, len(blob.data))
 		}
 	} else if fetchAll {
 		blob.loadAllData()
@@ -154,7 +154,7 @@ func (blob *DmBlob) Write(pos int, src []byte) (n int, err error) {
 		if err = blob.connection.checkClosed(); err != nil {
 			return -1, err
 		}
-		var writeLen, err = blob.connection.Access.dm_build_912(blob, pos, src)
+		var writeLen, err = blob.connection.Access.dm_build_226(blob, pos, src)
 		if err != nil {
 			return -1, err
 		}
@@ -191,20 +191,20 @@ func (blob *DmBlob) Truncate(length int64) error {
 			return nil
 		}
 		tmp := make([]byte, length)
-		Dm_build_1.Dm_build_57(tmp, 0, blob.data, 0, len(tmp))
+		Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, len(tmp))
 		blob.data = tmp
 		blob.length = int64(len(tmp))
 	} else {
 		if err = blob.connection.checkClosed(); err != nil {
 			return err
 		}
-		blob.length, err = blob.connection.Access.dm_build_926(&blob.lob, int(length))
+		blob.length, err = blob.connection.Access.dm_build_240(&blob.lob, int(length))
 		if err != nil {
 			return err
 		}
 		if blob.groupId == -1 {
 			tmp := make([]byte, blob.length)
-			Dm_build_1.Dm_build_57(tmp, 0, blob.data, 0, int(blob.length))
+			Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, int(blob.length))
 			blob.data = tmp
 		}
 	}
@@ -264,7 +264,7 @@ func (blob *DmBlob) getBytes(pos int64, length int32) ([]byte, error) {
 		return blob.data[pos : pos+int64(length)], nil
 	} else {
 
-		return blob.connection.Access.dm_build_873(blob, int32(pos), length)
+		return blob.connection.Access.dm_build_187(blob, int32(pos), length)
 	}
 }
 
@@ -281,11 +281,11 @@ func (blob *DmBlob) loadAllData() {
 func (blob *DmBlob) setLocalData(pos int, p []byte) {
 	if pos+len(p) >= int(blob.length) {
 		var tmp = make([]byte, pos+len(p))
-		Dm_build_1.Dm_build_57(tmp, 0, blob.data, 0, pos)
-		Dm_build_1.Dm_build_57(tmp, pos, p, 0, len(p))
+		Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, pos)
+		Dm_build_931.Dm_build_987(tmp, pos, p, 0, len(p))
 		blob.data = tmp
 	} else {
-		Dm_build_1.Dm_build_57(blob.data, pos, p, 0, len(p))
+		Dm_build_931.Dm_build_987(blob.data, pos, p, 0, len(p))
 	}
 	blob.length = int64(len(blob.data))
 }

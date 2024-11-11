@@ -107,7 +107,7 @@ func (dmError *DmError) throw() *DmError {
 	return dmError
 }
 
-func (dmError *DmError) FormatStack() string {
+func (dmError *DmError) Stack() string {
 	if dmError == nil || dmError.stack == nil {
 		return ""
 	}
@@ -129,7 +129,7 @@ func (dmError *DmError) getErrText() string {
 }
 
 func (dmError *DmError) Error() string {
-	return fmt.Sprintf("Error %d: %s", dmError.ErrCode, dmError.getErrText()) + dmError.detail + "\n" + "stack info:\n" + dmError.FormatStack()
+	return fmt.Sprintf("Error %d: %s", dmError.ErrCode, dmError.getErrText()) + dmError.detail // + "\n" + "stack info:\n" + dmError.Stack()
 }
 
 // 扩充ErrText

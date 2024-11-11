@@ -625,9 +625,7 @@ func (logger Logger) DebugWithErr(msg string, err error) {
 	if logger.IsDebugEnabled() {
 		var e *DmError
 		if errors.As(err, &e) {
-			logger.println(logger.formatHead("DEBUG") + msg + util.LINE_SEPARATOR + e.FormatStack())
-		} else {
-			logger.println(logger.formatHead("DEBUG") + msg + util.LINE_SEPARATOR + err.Error())
+			logger.println(logger.formatHead("DEBUG") + msg + util.LINE_SEPARATOR + e.Stack())
 		}
 	}
 }
@@ -648,7 +646,7 @@ func (logger Logger) Warn(msg string) {
 }
 func (logger Logger) ErrorWithErr(msg string, err error) {
 	//if e, ok := err.(*DmError); ok {
-	//	logger.println(logger.formatHead("ERROR") + msg + util.LINE_SEPARATOR + e.FormatStack())
+	//	logger.println(logger.formatHead("ERROR") + msg + util.LINE_SEPARATOR + e.Stack())
 	//} else {
 	logger.println(logger.formatHead("ERROR") + msg + util.LINE_SEPARATOR + err.Error())
 	//}

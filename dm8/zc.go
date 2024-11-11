@@ -62,7 +62,7 @@ type filter interface {
 type IDGenerator int64
 
 var dmDriverIDGenerator = new(IDGenerator)
-var dmConnectorIDGenerator = new(IDGenerator)
+var dmConntorIDGenerator = new(IDGenerator)
 var dmConnIDGenerator = new(IDGenerator)
 var dmStmtIDGenerator = new(IDGenerator)
 var dmResultIDGenerator = new(IDGenerator)
@@ -106,7 +106,7 @@ func runLog() {
 			flushFreq:  LogFlushFreq,
 			filePath:   LogDir,
 			filePrefix: "dm_go",
-			buffer:     Dm_build_286(),
+			buffer:     Dm_build_1216(),
 		}
 		go goMap["log"].doRun()
 	}

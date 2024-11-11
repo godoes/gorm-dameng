@@ -141,7 +141,7 @@ func (rpv rsPoolValue) refreshed(conn *DmConnection) (bool, error) {
 		return false, nil
 	}
 
-	tss, err := conn.Access.Dm_build_850(interface{}(rpv.m_TbIds).([]uint32))
+	tss, err := conn.Access.Dm_build_164(interface{}(rpv.m_TbIds).([]uint32))
 	if err != nil {
 		return false, err
 	}
@@ -338,10 +338,33 @@ func (stmt *DmStatement) prepare() error {
 		}
 	}
 
-	stmt.execInfo, err = stmt.dmConn.Access.Dm_build_775(stmt, Dm_build_1062)
+	stmt.execInfo, err = stmt.dmConn.Access.Dm_build_81(stmt, Dm_build_376)
 	if err != nil {
 		return err
 	}
+	stmt.serverParams = stmt.execInfo.serverParams
+	stmt.paramCount = int32(len(stmt.serverParams))
+	stmt.bindParams = make([]parameter, len(stmt.serverParams))
+	for i := 0; i < len(stmt.serverParams); i++ {
+		stmt.bindParams[i].InitParameter()
+		stmt.bindParams[i].colType = stmt.serverParams[i].colType
+		stmt.bindParams[i].prec = stmt.serverParams[i].prec
+		stmt.bindParams[i].scale = stmt.serverParams[i].scale
+		stmt.bindParams[i].nullable = stmt.serverParams[i].nullable
+		stmt.bindParams[i].hasDefault = stmt.serverParams[i].hasDefault
+		stmt.bindParams[i].typeFlag = stmt.serverParams[i].typeFlag
+		stmt.bindParams[i].lob = stmt.serverParams[i].lob
+		stmt.bindParams[i].ioType = stmt.serverParams[i].ioType
+		stmt.bindParams[i].name = stmt.serverParams[i].name
+		stmt.bindParams[i].typeName = stmt.serverParams[i].typeName
+		stmt.bindParams[i].tableName = stmt.serverParams[i].tableName
+		stmt.bindParams[i].schemaName = stmt.serverParams[i].schemaName
+		stmt.bindParams[i].lobTabId = stmt.serverParams[i].lobTabId
+		stmt.bindParams[i].lobColId = stmt.serverParams[i].lobColId
+		stmt.bindParams[i].mask = stmt.serverParams[i].mask
+		stmt.bindParams[i].typeDescriptor = stmt.serverParams[i].typeDescriptor
+	}
+
 	stmt.prepared = true
 	return nil
 }
@@ -387,7 +410,7 @@ func (stmt *DmStatement) exec(args []driver.Value) (*DmResult, error) {
 		}
 		err = stmt.executeBatch(tmpArg)
 	} else {
-		err = stmt.executeInner(args, Dm_build_1064)
+		err = stmt.executeInner(args, Dm_build_376)
 	}
 	if err != nil {
 		return nil, err
@@ -413,7 +436,7 @@ func (stmt *DmStatement) execContext(ctx context.Context, args []driver.NamedVal
 func (stmt *DmStatement) query(args []driver.Value) (*DmRows, error) {
 	var err error
 	stmt.inUse = true
-	err = stmt.executeInner(args, Dm_build_1063)
+	err = stmt.executeInner(args, Dm_build_377)
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +484,7 @@ func NewDmStmt(conn *DmConnection, sql string) (*DmStatement, error) {
 	s.inUse = true
 	s.isBatch = conn.isBatch
 
-	err := conn.Access.Dm_build_757(s)
+	err := conn.Access.Dm_build_63(s)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +512,7 @@ func (stmt *DmStatement) free() error {
 		_ = rs.Close()
 	}
 
-	err := stmt.dmConn.Access.Dm_build_762(stmt.id)
+	err := stmt.dmConn.Access.Dm_build_68(stmt.id)
 	if err != nil {
 		return err
 	}
@@ -498,11 +521,10 @@ func (stmt *DmStatement) free() error {
 	return nil
 }
 
-func bindInParam(stmt *DmStatement, i int, dtype int32, firstRow bool) {
+func bindInParam(stmt *DmStatement, i int, dtype int32, isNil bool, firstRow bool) {
 	if !firstRow {
 		return
 	}
-	isNil := dtype == NULL
 	serverParam := &stmt.serverParams[i]
 	bindParam := &stmt.bindParams[i]
 	if serverParam == nil {
@@ -619,7 +641,7 @@ func bindOutParam(stmt *DmStatement, i int, dtype int32) error {
 			if bindParam.cursorStmt == nil {
 				bindParam.cursorStmt = &DmStatement{dmConn: stmt.dmConn}
 				bindParam.cursorStmt.resetFilterable(&stmt.dmConn.filterable)
-				err = bindParam.cursorStmt.dmConn.Access.Dm_build_757(bindParam.cursorStmt)
+				err = bindParam.cursorStmt.dmConn.Access.Dm_build_63(bindParam.cursorStmt)
 			}
 		}
 	}
@@ -641,17 +663,17 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 	for i, arg := range args {
 	nextSwitch:
 		if stmt.serverParams[i].colType == CURSOR {
-			bindInParam(stmt, i, CURSOR, firstRow)
+			bindInParam(stmt, i, CURSOR, false, firstRow)
 			if stmt.bindParams[i].cursorStmt == nil {
 				stmt.bindParams[i].cursorStmt = &DmStatement{dmConn: stmt.dmConn}
 				stmt.bindParams[i].cursorStmt.resetFilterable(&stmt.dmConn.filterable)
-				err = stmt.bindParams[i].cursorStmt.dmConn.Access.Dm_build_757(stmt.bindParams[i].cursorStmt)
+				err = stmt.bindParams[i].cursorStmt.dmConn.Access.Dm_build_63(stmt.bindParams[i].cursorStmt)
 			}
 			stmt.bindParams[i].ioType = IO_TYPE_INOUT
 			continue
 		}
 		if arg == nil {
-			bindInParam(stmt, i, NULL, firstRow)
+			bindInParam(stmt, i, NULL, true, firstRow)
 			bytes[i] = nil
 
 			continue
@@ -659,42 +681,42 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 
 		switch v := arg.(type) {
 		case bool:
-			bindInParam(stmt, i, TINYINT, firstRow)
+			bindInParam(stmt, i, TINYINT, false, firstRow)
 			bytes[i], err = G2DB.fromBool(v, stmt.bindParams[i], stmt.dmConn)
 		case int8:
-			bindInParam(stmt, i, TINYINT, firstRow)
+			bindInParam(stmt, i, TINYINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case int16:
-			bindInParam(stmt, i, SMALLINT, firstRow)
+			bindInParam(stmt, i, SMALLINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case int32:
-			bindInParam(stmt, i, INT, firstRow)
+			bindInParam(stmt, i, INT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case int64:
-			bindInParam(stmt, i, BIGINT, firstRow)
+			bindInParam(stmt, i, BIGINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(v, stmt.bindParams[i], stmt.dmConn)
 		case int:
-			bindInParam(stmt, i, BIGINT, firstRow)
+			bindInParam(stmt, i, BIGINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case uint8:
-			bindInParam(stmt, i, SMALLINT, firstRow)
+			bindInParam(stmt, i, SMALLINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case uint16:
-			bindInParam(stmt, i, INT, firstRow)
+			bindInParam(stmt, i, INT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 		case uint32:
-			bindInParam(stmt, i, BIGINT, firstRow)
+			bindInParam(stmt, i, BIGINT, false, firstRow)
 			bytes[i], err = G2DB.fromInt64(int64(v), stmt.bindParams[i], stmt.dmConn)
 
 		case float32:
-			bindInParam(stmt, i, REAL, firstRow)
+			bindInParam(stmt, i, REAL, false, firstRow)
 			bytes[i], err = G2DB.fromFloat32(v, stmt.bindParams[i], stmt.dmConn)
 		case float64:
-			bindInParam(stmt, i, DOUBLE, firstRow)
+			bindInParam(stmt, i, DOUBLE, false, firstRow)
 			bytes[i], err = G2DB.fromFloat64(v, stmt.bindParams[i], stmt.dmConn)
 		case []byte:
 			if v == nil {
-				bindInParam(stmt, i, NULL, firstRow)
+				bindInParam(stmt, i, VARBINARY, true, firstRow)
 				bytes[i] = nil
 
 			} else {
@@ -702,7 +724,7 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 				if len(v) >= VARBINARY_PREC {
 					dtype = BLOB
 				}
-				bindInParam(stmt, i, int32(dtype), firstRow)
+				bindInParam(stmt, i, int32(dtype), false, firstRow)
 				bytes[i], err = G2DB.fromBytes(v, stmt.bindParams[i], stmt.dmConn)
 			}
 		case string:
@@ -715,44 +737,44 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 			if len(v) >= VARCHAR_PREC {
 				dtype = CLOB
 			}
-			bindInParam(stmt, i, int32(dtype), firstRow)
+			bindInParam(stmt, i, int32(dtype), false, firstRow)
 			bytes[i], err = G2DB.fromString(v, stmt.bindParams[i], stmt.dmConn)
 		case time.Time:
-			bindInParam(stmt, i, DATETIME, firstRow)
+			bindInParam(stmt, i, DATETIME, false, firstRow)
 			bytes[i], err = G2DB.fromTime(v, stmt.bindParams[i], stmt.dmConn)
 		case DmTimestamp:
-			bindInParam(stmt, i, DATETIME, firstRow)
+			bindInParam(stmt, i, DATETIME, false, firstRow)
 			bytes[i], err = G2DB.fromTime(v.ToTime(), stmt.bindParams[i], stmt.dmConn)
 		case DmIntervalDT:
-			bindInParam(stmt, i, INTERVAL_DT, firstRow)
+			bindInParam(stmt, i, INTERVAL_DT, false, firstRow)
 			if stmt.bindParams[i].typeFlag != TYPE_FLAG_EXACT {
 				stmt.bindParams[i].scale = int32(v.scaleForSvr)
 			}
 			bytes[i], err = G2DB.fromDmIntervalDT(v, stmt.bindParams[i], stmt.dmConn)
 		case DmIntervalYM:
-			bindInParam(stmt, i, INTERVAL_YM, firstRow)
+			bindInParam(stmt, i, INTERVAL_YM, false, firstRow)
 			if stmt.bindParams[i].typeFlag != TYPE_FLAG_EXACT {
 				stmt.bindParams[i].scale = int32(v.scaleForSvr)
 			}
 			bytes[i], err = G2DB.fromDmdbIntervalYM(v, stmt.bindParams[i], stmt.dmConn)
 		case DmDecimal:
-			bindInParam(stmt, i, DECIMAL, firstRow)
+			bindInParam(stmt, i, DECIMAL, false, firstRow)
 			bytes[i], err = G2DB.fromDecimal(v, stmt.bindParams[i], stmt.dmConn)
 
 		case DmBlob:
-			bindInParam(stmt, i, BLOB, firstRow)
+			bindInParam(stmt, i, BLOB, false, firstRow)
 			bytes[i], err = G2DB.fromBlob(v, stmt.bindParams[i], stmt.dmConn)
 			if err != nil {
 				return nil, err
 			}
 		case DmClob:
-			bindInParam(stmt, i, CLOB, firstRow)
+			bindInParam(stmt, i, CLOB, false, firstRow)
 			bytes[i], err = G2DB.fromClob(v, stmt.bindParams[i], stmt.dmConn)
 			if err != nil {
 				return nil, err
 			}
 		case DmArray:
-			bindInParam(stmt, i, ARRAY, firstRow)
+			bindInParam(stmt, i, ARRAY, false, firstRow)
 			da := &v
 			da, err = da.create(stmt.dmConn)
 			if err != nil {
@@ -761,7 +783,7 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 
 			bytes[i], err = G2DB.fromArray(da, stmt.bindParams[i], stmt.dmConn)
 		case DmStruct:
-			bindInParam(stmt, i, CLASS, firstRow)
+			bindInParam(stmt, i, CLASS, false, firstRow)
 			ds := &v
 			ds, err = ds.create(stmt.dmConn)
 			if err != nil {
@@ -774,34 +796,36 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 			if arg, err = cvt.ConvertValue(v.Dest); err != nil {
 				return nil, err
 			}
-			goto nextSwitch
+			if v.In {
+				goto nextSwitch
+			}
 
 		case *DmTimestamp:
-			bindInParam(stmt, i, DATETIME, firstRow)
+			bindInParam(stmt, i, DATETIME, false, firstRow)
 			bytes[i], err = G2DB.fromTime(v.ToTime(), stmt.bindParams[i], stmt.dmConn)
 		case *DmIntervalDT:
-			bindInParam(stmt, i, INTERVAL_DT, firstRow)
+			bindInParam(stmt, i, INTERVAL_DT, false, firstRow)
 			if stmt.bindParams[i].typeFlag != TYPE_FLAG_EXACT {
 				stmt.bindParams[i].scale = int32(v.scaleForSvr)
 			}
 			bytes[i], err = G2DB.fromDmIntervalDT(*v, stmt.bindParams[i], stmt.dmConn)
 		case *DmIntervalYM:
-			bindInParam(stmt, i, INTERVAL_YM, firstRow)
+			bindInParam(stmt, i, INTERVAL_YM, false, firstRow)
 			if stmt.bindParams[i].typeFlag != TYPE_FLAG_EXACT {
 				stmt.bindParams[i].scale = int32(v.scaleForSvr)
 			}
 			bytes[i], err = G2DB.fromDmdbIntervalYM(*v, stmt.bindParams[i], stmt.dmConn)
 		case *DmDecimal:
-			bindInParam(stmt, i, DECIMAL, firstRow)
+			bindInParam(stmt, i, DECIMAL, false, firstRow)
 			bytes[i], err = G2DB.fromDecimal(*v, stmt.bindParams[i], stmt.dmConn)
 		case *DmBlob:
-			bindInParam(stmt, i, BLOB, firstRow)
+			bindInParam(stmt, i, BLOB, false, firstRow)
 			bytes[i], err = G2DB.fromBlob(*v, stmt.bindParams[i], stmt.dmConn)
 		case *DmClob:
-			bindInParam(stmt, i, CLOB, firstRow)
+			bindInParam(stmt, i, CLOB, false, firstRow)
 			bytes[i], err = G2DB.fromClob(*v, stmt.bindParams[i], stmt.dmConn)
 		case *DmArray:
-			bindInParam(stmt, i, ARRAY, firstRow)
+			bindInParam(stmt, i, ARRAY, false, firstRow)
 			v, err = v.create(stmt.dmConn)
 			if err != nil {
 				return nil, err
@@ -809,7 +833,7 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 
 			bytes[i], err = G2DB.fromArray(v, stmt.bindParams[i], stmt.dmConn)
 		case *DmStruct:
-			bindInParam(stmt, i, CLASS, firstRow)
+			bindInParam(stmt, i, CLASS, false, firstRow)
 			v, err = v.create(stmt.dmConn)
 			if err != nil {
 				return nil, err
@@ -818,15 +842,15 @@ func encodeArgs(stmt *DmStatement, args []driver.Value, firstRow bool) ([]interf
 			bytes[i], err = G2DB.fromStruct(v, stmt.bindParams[i], stmt.dmConn)
 		case *driver.Rows:
 			if stmt.serverParams[i].colType == CURSOR {
-				bindInParam(stmt, i, CURSOR, firstRow)
+				bindInParam(stmt, i, CURSOR, false, firstRow)
 				if stmt.bindParams[i].cursorStmt == nil {
 					stmt.bindParams[i].cursorStmt = &DmStatement{dmConn: stmt.dmConn}
 					stmt.bindParams[i].cursorStmt.resetFilterable(&stmt.dmConn.filterable)
-					err = stmt.bindParams[i].cursorStmt.dmConn.Access.Dm_build_757(stmt.bindParams[i].cursorStmt)
+					err = stmt.bindParams[i].cursorStmt.dmConn.Access.Dm_build_63(stmt.bindParams[i].cursorStmt)
 				}
 			}
 		case io.Reader:
-			bindInParam(stmt, i, stmt.serverParams[i].colType, firstRow)
+			bindInParam(stmt, i, stmt.serverParams[i].colType, stmt.serverParams[i].colType == NULL, firstRow)
 			bytes[i], err = G2DB.fromReader(v, stmt.serverParams[i], stmt.dmConn)
 			if err != nil {
 				return nil, err
@@ -998,7 +1022,7 @@ func (stmt *DmStatement) executeInner(args []driver.Value, _ int16) (err error) 
 			return err
 		}
 	}
-	stmt.execInfo, err = stmt.dmConn.Access.Dm_build_807(stmt, bytes, false)
+	stmt.execInfo, err = stmt.dmConn.Access.Dm_build_121(stmt, bytes, false)
 	if err != nil {
 		return err
 	}
@@ -1069,7 +1093,7 @@ func (stmt *DmStatement) executeInner(args []driver.Value, _ int16) (err error) 
 					v, err = TypeDataSV.bytesToObj(outParamData, nil, stmt.bindParams[i].typeDescriptor)
 				case CURSOR:
 					var tmpExecInfo *execRetInfo
-					if tmpExecInfo, err = stmt.dmConn.Access.Dm_build_817(stmt.bindParams[i].cursorStmt, 1); err != nil {
+					if tmpExecInfo, err = stmt.dmConn.Access.Dm_build_131(stmt.bindParams[i].cursorStmt, 1); err != nil {
 						return err
 					}
 					if tmpExecInfo.hasResultSet {
@@ -1151,6 +1175,43 @@ func (stmt *DmStatement) executeInner(args []driver.Value, _ int16) (err error) 
 							return err
 						}
 						*v = val
+					}
+				case *[][]byte:
+					if outParamData == nil {
+						*v = nil
+					} else {
+						var ret [][]byte
+						var dmobj interface{}
+						var arr interface{}
+						if dmobj, err = TypeDataSV.bytesToObj(outParamData, nil, stmt.bindParams[i].typeDescriptor); err != nil {
+							return err
+						}
+						if dmobj != nil {
+							if dmobj, ok := dmobj.(*DmArray); ok {
+								if arr, err = dmobj.GetArray(); err != nil {
+									return err
+								}
+								if arr != nil {
+									var iarr = arr.([]interface{})
+									ret = make([][]byte, len(iarr))
+
+									for i = 0; i < len(iarr); i++ {
+										if iarr[i] == nil {
+											ret[i] = nil
+										} else if tmp, ok := iarr[i].(string); ok {
+											ret[i] = []byte(tmp)
+										} else if tmp, ok := iarr[i].([]byte); ok {
+											ret[i] = tmp
+										} else {
+											return ECGO_UNSUPPORTED_OUTPARAM_TYPE.throw()
+										}
+									}
+								}
+							} else {
+								return ECGO_UNSUPPORTED_OUTPARAM_TYPE.throw()
+							}
+						}
+						*v = ret
 					}
 				case *bool:
 					if outParamData == nil {
@@ -1395,7 +1456,7 @@ func (stmt *DmStatement) executeInner(args []driver.Value, _ int16) (err error) 
 				case *driver.Rows:
 					if stmt.bindParams[i].colType == CURSOR {
 						var tmpExecInfo *execRetInfo
-						tmpExecInfo, err = stmt.dmConn.Access.Dm_build_817(stmt.bindParams[i].cursorStmt, 1)
+						tmpExecInfo, err = stmt.dmConn.Access.Dm_build_131(stmt.bindParams[i].cursorStmt, 1)
 						if err != nil {
 							return err
 						}
@@ -1445,14 +1506,14 @@ func (stmt *DmStatement) executeBatch(args []driver.Value) (err error) {
 
 	var bytes [][]interface{}
 
-	if stmt.execInfo.retSqlType == Dm_build_1077 || stmt.execInfo.retSqlType == Dm_build_1082 {
+	if stmt.execInfo.retSqlType == Dm_build_391 || stmt.execInfo.retSqlType == Dm_build_396 {
 		return ECGO_INVALID_SQL_TYPE.throw()
 	}
 
 	if stmt.paramCount > 0 && args != nil && len(args) > 0 {
 
 		if len(args) == 1 || stmt.dmConn.dmConnector.batchType == 2 ||
-			(stmt.dmConn.dmConnector.batchNotOnCall && stmt.execInfo.retSqlType == Dm_build_1078) {
+			(stmt.dmConn.dmConnector.batchNotOnCall && stmt.execInfo.retSqlType == Dm_build_392) {
 			return stmt.executeBatchByRow(args)
 		} else {
 			for i, arg := range args {
@@ -1466,7 +1527,7 @@ func (stmt *DmStatement) executeBatch(args []driver.Value) (err error) {
 				}
 				bytes = append(bytes, tmpBytes)
 			}
-			stmt.execInfo, err = stmt.dmConn.Access.Dm_build_796(stmt, bytes, stmt.preExec)
+			stmt.execInfo, err = stmt.dmConn.Access.Dm_build_102(stmt, bytes, stmt.preExec)
 		}
 	}
 	return err
@@ -1478,7 +1539,7 @@ func (stmt *DmStatement) executeBatchByRow(args []driver.Value) (err error) {
 	stmt.execInfo.updateCounts = make([]int64, count)
 	var sqlErrBuilder strings.Builder
 	for i := 0; i < count; i++ {
-		tmpExecInfo, err := stmt.dmConn.Access.Dm_build_807(stmt, args[i].([]interface{}), stmt.preExec || i != 0)
+		tmpExecInfo, err := stmt.dmConn.Access.Dm_build_121(stmt, args[i].([]interface{}), stmt.preExec || i != 0)
 		if err == nil {
 			stmt.execInfo.union(tmpExecInfo, i, 1)
 		} else {

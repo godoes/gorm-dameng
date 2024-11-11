@@ -84,7 +84,7 @@ func (ds *DmStruct) getAttribsTypeData() []TypeData {
 	return ds.m_attribs
 }
 
-func (ds *DmStruct) createByStructDescriptor(desc *StructDescriptor, conn *DmConnection) (*DmStruct, error) {
+func (ds *DmStruct) createByStructDescriptor(desc *StructDescriptor, _ *DmConnection) (*DmStruct, error) {
 	ds.initTypeData()
 
 	if nil == desc {

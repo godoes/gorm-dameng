@@ -128,15 +128,22 @@ var (
 // filePath: dm_svc.conf 文件路径
 func load(filePath string) {
 	if filePath == "" {
-		switch runtime.GOOS {
-		case "windows":
-			filePath = os.Getenv("SystemRoot") + "\\system32\\dm_svc.conf"
-		case "linux":
-			filePath = "/etc/dm_svc.conf"
-		default:
-			return
+		// 如果设置了环境变量则环境变量优先
+		filePath = os.Getenv("DM_SVC_PATH")
+		if filePath == "" {
+			// 否则使用默认
+			switch runtime.GOOS {
+			case "windows":
+				filePath = os.Getenv("SystemRoot") + "\\system32\\dm_svc.conf"
+			case "linux":
+				filePath = "/etc/dm_svc.conf"
+			default:
+				return
+			}
 		}
 	}
+
+	// 如果设置了连接串上svcConfPath，则串上优先
 	file, err := os.Open(filePath)
 	defer func(file *os.File) {
 		_ = file.Close()
