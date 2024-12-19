@@ -297,7 +297,11 @@ func (m Migrator) MigrateColumn(value interface{}, field *schema.Field, columnTy
 
 	if !isSameType {
 		// check size
-		if length, ok := columnType.Length(); length != int64(field.Size) {
+		fieldSize := field.Size
+		if m.VarcharSizeIsCharLength && strings.EqualFold(realDataType, "VARCHAR") && field.DataType == schema.String {
+			fieldSize *= 4
+		}
+		if length, ok := columnType.Length(); length != int64(fieldSize) {
 			if length > 0 && field.Size > 0 {
 				alterColumn = true
 			} else {
