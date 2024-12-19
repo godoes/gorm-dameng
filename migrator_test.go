@@ -2,6 +2,7 @@ package dameng
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -256,5 +257,44 @@ func TestMigrator_MigrateColumnComment(t *testing.T) {
 			t.Fatalf("expected comments %#v, got %#v", wantComments, gotComments)
 		}
 		t.Logf("got comments: %#v", gotComments)
+	}
+}
+
+type testTableRemigrate struct {
+	ID    uint   `gorm:"primaryKey;autoIncrement"`
+	PType string `gorm:"size:100"`
+	V0    string `gorm:"size:100"`
+	V1    string `gorm:"size:100"`
+	V2    string `gorm:"size:100"`
+	V3    string `gorm:"size:100"`
+	V4    string `gorm:"size:100"`
+	V5    string `gorm:"size:100"`
+}
+
+// 测试重复迁移
+func TestMigrator_Remigrate(t *testing.T) {
+	dsn := BuildUrl(dmUsername, dmPassword, dmHost, dmPort, dsnOptions)
+	db, err := gorm.Open(New(Config{DriverName: DriverName, DSN: dsn}))
+	if err != nil {
+		t.Error(err)
+	}
+	migrator := db.Debug().Migrator()
+	tableModel := new(testTableRemigrate)
+	defer func() {
+		if err = migrator.DropTable(tableModel); err != nil {
+			t.Errorf("couldn't drop table %q, got error: %v", "testTableRemigrate", err)
+		}
+	}()
+
+	fmt.Println()
+	t.Log("--- AutoMigrate 1")
+	if err = migrator.AutoMigrate(tableModel); err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println()
+	t.Log("--- AutoMigrate 2")
+	if err = migrator.AutoMigrate(tableModel); err != nil {
+		t.Fatal(err)
 	}
 }
