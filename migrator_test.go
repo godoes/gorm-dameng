@@ -274,27 +274,49 @@ type testTableRemigrate struct {
 // 测试重复迁移
 func TestMigrator_Remigrate(t *testing.T) {
 	dsn := BuildUrl(dmUsername, dmPassword, dmHost, dmPort, dsnOptions)
-	db, err := gorm.Open(New(Config{DriverName: DriverName, DSN: dsn}))
+	dbVarcharSizeIsBytesLength, err := gorm.Open(New(Config{DriverName: DriverName, DSN: dsn, VarcharSizeIsCharLength: false}))
 	if err != nil {
 		t.Error(err)
+		return
 	}
-	migrator := db.Debug().Migrator()
-	tableModel := new(testTableRemigrate)
-	defer func() {
-		if err = migrator.DropTable(tableModel); err != nil {
-			t.Errorf("couldn't drop table %q, got error: %v", "testTableRemigrate", err)
-		}
-	}()
-
-	fmt.Println()
-	t.Log("--- AutoMigrate 1")
-	if err = migrator.AutoMigrate(tableModel); err != nil {
-		t.Fatal(err)
+	dbVarcharSizeIsCharLength, err := gorm.Open(New(Config{DriverName: DriverName, DSN: dsn, VarcharSizeIsCharLength: true}))
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
-	fmt.Println()
-	t.Log("--- AutoMigrate 2")
-	if err = migrator.AutoMigrate(tableModel); err != nil {
-		t.Fatal(err)
+	type args struct {
+		db *gorm.DB
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{"dbVarcharSizeIsBytesLength", args{dbVarcharSizeIsBytesLength}},
+		{"dbVarcharSizeIsCharLength", args{dbVarcharSizeIsCharLength}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := tt.args.db
+			migrator := db.Debug().Migrator()
+			tableModel := new(testTableRemigrate)
+			defer func() {
+				if err = migrator.DropTable(tableModel); err != nil {
+					t.Errorf("couldn't drop table %q, got error: %v", "testTableRemigrate", err)
+				}
+			}()
+
+			fmt.Println()
+			t.Log("--- AutoMigrate 1")
+			if err = migrator.AutoMigrate(tableModel); err != nil {
+				t.Fatal(err)
+			}
+
+			fmt.Println()
+			t.Log("--- AutoMigrate 2")
+			if err = migrator.AutoMigrate(tableModel); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
