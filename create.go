@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 )
 
 func Create(db *gorm.DB) {
@@ -169,7 +170,44 @@ func Create(db *gorm.DB) {
 			}
 		}
 
-		if updateInsertID {
+		if !updateInsertID {
+			return
+		}
+		// map insert support return increment id
+		// https://github.com/go-gorm/gorm/pull/6662
+		var pkFieldName = "@id"
+		if db.Statement.Schema != nil {
+			if db.Statement.Schema.PrioritizedPrimaryField == nil || !db.Statement.Schema.PrioritizedPrimaryField.HasDefaultValue {
+				return
+			}
+			pkFieldName = db.Statement.Schema.PrioritizedPrimaryField.DBName
+		}
+		// append @id column with value for auto-increment primary key
+		// the @id value is correct, when: 1. without setting auto-increment primary key, 2. database AutoIncrementIncrement = 1
+		switch values := db.Statement.Dest.(type) {
+		case map[string]interface{}:
+			values[pkFieldName] = insertID
+		case *map[string]interface{}:
+			(*values)[pkFieldName] = insertID
+		case []map[string]interface{}, *[]map[string]interface{}:
+			mapValues, ok := values.([]map[string]interface{})
+			if !ok {
+				if v, ok := values.(*[]map[string]interface{}); ok {
+					if *v != nil {
+						mapValues = *v
+					}
+				}
+			}
+			// if config.LastInsertIDReversed {
+			insertID -= int64(len(mapValues)-1) * schema.DefaultAutoIncrementIncrement
+			// }
+			for _, mapValue := range mapValues {
+				if mapValue != nil {
+					mapValue[pkFieldName] = insertID
+				}
+				insertID += schema.DefaultAutoIncrementIncrement
+			}
+		default:
 			switch db.Statement.ReflectValue.Kind() {
 			case reflect.Slice, reflect.Array:
 				//if config.LastInsertIDReversed {
