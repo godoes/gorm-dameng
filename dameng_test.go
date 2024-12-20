@@ -10,6 +10,7 @@ import (
 
 	"github.com/godoes/gorm-dameng/dm8"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
@@ -86,7 +87,9 @@ func TestGormConnExample(t *testing.T) {
 
 	// 参考链接： https://eco.dameng.com/document/dm/zh-cn/pm/go-rogramming-guide.html#11.8%20ORM%20%E6%96%B9%E8%A8%80%E5%8C%85
 	dialector := New(Config{DSN: dsn, VarcharSizeIsCharLength: true})
-	db, err := gorm.Open(dialector, &gorm.Config{})
+	db, err := gorm.Open(dialector, &gorm.Config{
+		Logger: logger.New(log.Default(), logger.Config{LogLevel: logger.Info}),
+	})
 	if err != nil {
 		t.Fatalf("连接数据库 [%s@%s:%d] 失败：%v", dmUsername, dmHost, dmPort, err)
 	} else {
@@ -113,6 +116,22 @@ func TestGormConnExample(t *testing.T) {
 		t.Errorf("创建数据失败：%v", err)
 	} else {
 		t.Logf("创建数据成功！数据 ID：%d", data.ID)
+	}
+	// Create - 批量创建 map 型数据
+	list := []map[string]any{
+		{"code": "M42", "price": 200, "remark": "map1"},
+		{"code": "N42", "price": 200, "remark": "map2"},
+	}
+	var listIDs []any
+	db.Model(&Product{}).Create(list)
+	if err = db.Error; err != nil {
+		t.Errorf("批量创建 map 型数据失败：%v", err)
+	} else {
+		listIDs = make([]any, len(list))
+		for i, item := range list {
+			listIDs[i] = item["id"]
+		}
+		t.Logf("批量创建 map 型数据成功！数据 IDs：%+v", listIDs)
 	}
 
 	// Read
@@ -155,15 +174,22 @@ func TestGormConnExample(t *testing.T) {
 	}
 
 	// Delete - 删除 product
-	db.Delete(&product, 1)
+	db.Delete(&product, data.ID)
 	if err = db.Error; err != nil {
 		t.Errorf("删除数据失败：%v", err)
 	} else {
 		t.Log("删除数据成功！")
 	}
+	// Delete - 批量删除
+	db.Delete(&Product{}, "id IN (?)", listIDs)
+	if err = db.Error; err != nil {
+		t.Errorf("批量删除数据失败：%v", err)
+	} else {
+		t.Log("批量删除数据成功！")
+	}
 
 	//goland:noinspection SqlNoDataSourceInspection
-	//db.Exec(`DROP table "products"`)
+	db.Exec(`DROP table "products"`)
 	if err = db.Error; err != nil {
 		t.Errorf("删除表结构失败：%v", err)
 	} else {
