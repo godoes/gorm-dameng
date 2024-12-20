@@ -114,6 +114,17 @@ func TestGormConnExample(t *testing.T) {
 	} else {
 		t.Logf("创建数据成功！数据 ID：%d", data.ID)
 	}
+	// Create - 批量创建Map型数据
+	list := []map[string]any{
+		{"code": "M42", "price": 200, "remark": "map1"},
+		{"code": "N42", "price": 200, "remark": "map2"},
+	}
+	db.Model(&Product{}).Create(list)
+	if err = db.Error; err != nil {
+		t.Errorf("批量创建Map型数据失败：%v", err)
+	} else {
+		t.Logf("批量创建Map型数据成功！数据 IDs：%d %d", list[0]["id"], list[1]["id"])
+	}
 
 	// Read
 	var product Product
@@ -160,6 +171,13 @@ func TestGormConnExample(t *testing.T) {
 		t.Errorf("删除数据失败：%v", err)
 	} else {
 		t.Log("删除数据成功！")
+	}
+	// Delete - 批量删除
+	db.Delete(&Product{}, "id > ?", data.ID)
+	if err = db.Error; err != nil {
+		t.Errorf("批量删除数据失败：%v", err)
+	} else {
+		t.Log("批量删除数据成功！")
 	}
 
 	//goland:noinspection SqlNoDataSourceInspection
