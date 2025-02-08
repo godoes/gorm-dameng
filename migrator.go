@@ -234,9 +234,11 @@ func (m Migrator) GetColumnComment(stmt *gorm.Statement, fieldDBName string) (de
 	if m.DB.DryRun {
 		queryTx.DryRun = false
 	}
+	var currentDatabase string
+	_ = queryTx.Raw("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA');").Row().Scan(&currentDatabase)
 	var comment sql.NullString
 	queryTx.Raw("SELECT COMMENTS FROM ALL_COL_COMMENTS WHERE SCHEMA_NAME = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
-		m.CurrentDatabase(), stmt.Table, fieldDBName).Scan(&comment)
+		currentDatabase, stmt.Table, fieldDBName).Scan(&comment)
 	if comment.Valid {
 		description = comment.String
 	}
