@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/golang/snappy v0.0.4
-	golang.org/x/text v0.22.0
+	golang.org/x/text v0.23.0
 	gorm.io/gorm v1.25.12
 )
 
