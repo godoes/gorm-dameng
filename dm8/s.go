@@ -47,10 +47,10 @@ func (r *DmResult) RowsAffected() (int64, error) {
 	return r.filterChain.reset().DmResultRowsAffected(r)
 }
 
-func (r *DmResult) lastInsertId() (int64, error) {
-	return r.insertId, nil
+func (result *DmResult) lastInsertId() (int64, error) {
+	return result.insertId, nil
 }
 
-func (r *DmResult) rowsAffected() (int64, error) {
-	return r.affectedRows, nil
+func (result *DmResult) rowsAffected() (int64, error) {
+	return result.affectedRows, nil
 }

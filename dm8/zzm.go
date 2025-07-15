@@ -310,6 +310,8 @@ func SetServerGroupProperties(props *Properties, key string, value string) bool 
 		props.Set(RwStandbyRecoverTimeKey, value)
 	} else if key == "SCHEMA" {
 		props.Set(SchemaKey, value)
+	} else if key == "CATALOG" {
+		props.Set(CatalogKey, value)
 	} else if key == "SESS_ENCODE" {
 		if IsSupportedCharset(value) {
 			props.Set("sessEncode", value)
@@ -373,11 +375,12 @@ func parseServerName(name string, value string) *epGroup {
 			end = strings.IndexByte(v[begin:], ']')
 		}
 		if end != -1 {
-			tmpName = v[begin+1 : end]
+			//tmpName = v[begin+1 : end]
+			tmpName = v[begin : end+1]
 
 			// port
 			if portIndex := strings.IndexByte(v[end:], ':'); portIndex != -1 {
-				tmpPort, _ = strconv.Atoi(strings.TrimSpace(v[portIndex+1:]))
+				tmpPort, _ = strconv.Atoi(strings.TrimSpace(v[end+portIndex+1:]))
 			} else {
 				tmpPort = int(DEFAULT_PORT)
 			}

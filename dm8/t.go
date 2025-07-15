@@ -118,61 +118,61 @@ func (r *DmRows) ColumnTypePrecisionScale(index int) (precision, scale int64, ok
 	return r.filterChain.reset().DmRowsColumnTypePrecisionScale(r, index)
 }
 
-func (r *DmRows) Scan(src interface{}) error {
+func (dest *DmRows) Scan(src interface{}) error {
 	switch src := src.(type) {
 	case nil:
-		*r = *new(DmRows)
+		*dest = *new(DmRows)
 		return nil
 	case *DmRows:
-		*r = *src
+		*dest = *src
 		return nil
 	default:
 		return UNSUPPORTED_SCAN
 	}
 }
 
-func (r *DmRows) columns() []string {
-	return r.CurrentRows.Columns()
+func (rows *DmRows) columns() []string {
+	return rows.CurrentRows.Columns()
 }
 
-func (r *DmRows) close() error {
-	if f := r.finish; f != nil {
+func (rows *DmRows) close() error {
+	if f := rows.finish; f != nil {
 		f()
-		r.finish = nil
+		rows.finish = nil
 	}
-	return r.CurrentRows.Close()
+	return rows.CurrentRows.Close()
 }
 
-func (r *DmRows) next(dest []driver.Value) error {
-	return r.CurrentRows.Next(dest)
+func (rows *DmRows) next(dest []driver.Value) error {
+	return rows.CurrentRows.Next(dest)
 }
 
-func (r *DmRows) hasNextResultSet() bool {
-	return r.CurrentRows.HasNextResultSet()
+func (rows *DmRows) hasNextResultSet() bool {
+	return rows.CurrentRows.HasNextResultSet()
 }
 
-func (r *DmRows) nextResultSet() error {
-	return r.CurrentRows.NextResultSet()
+func (rows *DmRows) nextResultSet() error {
+	return rows.CurrentRows.NextResultSet()
 }
 
-func (r *DmRows) columnTypeScanType(index int) reflect.Type {
-	return r.CurrentRows.ColumnTypeScanType(index)
+func (rows *DmRows) columnTypeScanType(index int) reflect.Type {
+	return rows.CurrentRows.ColumnTypeScanType(index)
 }
 
-func (r *DmRows) columnTypeDatabaseTypeName(index int) string {
-	return r.CurrentRows.ColumnTypeDatabaseTypeName(index)
+func (rows *DmRows) columnTypeDatabaseTypeName(index int) string {
+	return rows.CurrentRows.ColumnTypeDatabaseTypeName(index)
 }
 
-func (r *DmRows) columnTypeLength(index int) (length int64, ok bool) {
-	return r.CurrentRows.ColumnTypeLength(index)
+func (rows *DmRows) columnTypeLength(index int) (length int64, ok bool) {
+	return rows.CurrentRows.ColumnTypeLength(index)
 }
 
-func (r *DmRows) columnTypeNullable(index int) (nullable, ok bool) {
-	return r.CurrentRows.ColumnTypeNullable(index)
+func (rows *DmRows) columnTypeNullable(index int) (nullable, ok bool) {
+	return rows.CurrentRows.ColumnTypeNullable(index)
 }
 
-func (r *DmRows) columnTypePrecisionScale(index int) (precision, scale int64, ok bool) {
-	return r.CurrentRows.ColumnTypePrecisionScale(index)
+func (rows *DmRows) columnTypePrecisionScale(index int) (precision, scale int64, ok bool) {
+	return rows.CurrentRows.ColumnTypePrecisionScale(index)
 }
 
 type innerRows struct {
@@ -305,7 +305,7 @@ func (innerRows *innerRows) HasNextResultSet() bool {
 		return innerRows.nextExecInfo.hasResultSet
 	}
 
-	innerRows.nextExecInfo, err = innerRows.dmStmt.dmConn.Access.Dm_build_131(innerRows.dmStmt, 0)
+	innerRows.nextExecInfo, err = innerRows.dmStmt.dmConn.Access.Dm_build_1474(innerRows.dmStmt, 0)
 	if err != nil {
 		return false
 	}
@@ -464,7 +464,7 @@ func (innerRows *innerRows) checkIndex(index int) *column {
 }
 
 func (innerRows *innerRows) fetchData(startPos int64) bool {
-	execInfo, err := innerRows.dmStmt.dmConn.Access.Dm_build_138(innerRows, startPos)
+	execInfo, err := innerRows.dmStmt.dmConn.Access.Dm_build_1481(innerRows, startPos)
 	if err != nil {
 		return false
 	}
@@ -486,7 +486,7 @@ func (innerRows *innerRows) getRowData(dest []driver.Value) (err error) {
 		if i <= len(dest)-1 {
 			if column.colType == CURSOR {
 				var tmpExecInfo *execRetInfo
-				tmpExecInfo, err = innerRows.dmStmt.dmConn.Access.Dm_build_131(innerRows.dmStmt, 1)
+				tmpExecInfo, err = innerRows.dmStmt.dmConn.Access.Dm_build_1474(innerRows.dmStmt, 1)
 				if err != nil {
 					return err
 				}

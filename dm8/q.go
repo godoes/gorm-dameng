@@ -68,18 +68,18 @@ type DmIntervalDT struct {
 	Valid bool
 }
 
-func (dest *DmIntervalDT) init() {
-	dest._type = QUA_D
-	dest.leadScale = 2
-	dest.secScale = 6
-	dest.negative = false
-	dest.days = 0
-	dest.hours = 0
-	dest.minutes = 0
-	dest.seconds = 0
-	dest.fraction = 0
-	dest.scaleForSvr = 0
-	dest.Valid = true
+func (dt *DmIntervalDT) init() {
+	dt._type = QUA_D
+	dt.leadScale = 2
+	dt.secScale = 6
+	dt.negative = false
+	dt.days = 0
+	dt.hours = 0
+	dt.minutes = 0
+	dt.seconds = 0
+	dt.fraction = 0
+	dt.scaleForSvr = 0
+	dt.Valid = true
 }
 
 func newDmIntervalDTByBytes(bytes []byte) *DmIntervalDT {
@@ -87,45 +87,45 @@ func newDmIntervalDTByBytes(bytes []byte) *DmIntervalDT {
 	dt.init()
 
 	dt._type = bytes[21]
-	dt.scaleForSvr = int(Dm_build_931.Dm_build_1033(bytes, 20))
+	dt.scaleForSvr = int(Dm_build_650.Dm_build_752(bytes, 20))
 	dt.leadScale = (dt.scaleForSvr >> 4) & 0x0000000F
 	dt.secScale = dt.scaleForSvr & 0x0000000F
 
 	switch dt._type {
 	case QUA_D:
-		dt.days = int(Dm_build_931.Dm_build_1033(bytes, 0))
+		dt.days = int(Dm_build_650.Dm_build_752(bytes, 0))
 	case QUA_DH:
-		dt.days = int(Dm_build_931.Dm_build_1033(bytes, 0))
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
+		dt.days = int(Dm_build_650.Dm_build_752(bytes, 0))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
 	case QUA_DHM:
-		dt.days = int(Dm_build_931.Dm_build_1033(bytes, 0))
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
+		dt.days = int(Dm_build_650.Dm_build_752(bytes, 0))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
 	case QUA_DHMS:
-		dt.days = int(Dm_build_931.Dm_build_1033(bytes, 0))
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
-		dt.seconds = int(Dm_build_931.Dm_build_1033(bytes, 12))
-		dt.fraction = int(Dm_build_931.Dm_build_1033(bytes, 16))
+		dt.days = int(Dm_build_650.Dm_build_752(bytes, 0))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
+		dt.seconds = int(Dm_build_650.Dm_build_752(bytes, 12))
+		dt.fraction = int(Dm_build_650.Dm_build_752(bytes, 16))
 	case QUA_H:
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
 	case QUA_HM:
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
 	case QUA_HMS:
-		dt.hours = int(Dm_build_931.Dm_build_1033(bytes, 4))
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
-		dt.seconds = int(Dm_build_931.Dm_build_1033(bytes, 12))
-		dt.fraction = int(Dm_build_931.Dm_build_1033(bytes, 16))
+		dt.hours = int(Dm_build_650.Dm_build_752(bytes, 4))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
+		dt.seconds = int(Dm_build_650.Dm_build_752(bytes, 12))
+		dt.fraction = int(Dm_build_650.Dm_build_752(bytes, 16))
 	case QUA_M:
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
 	case QUA_MS:
-		dt.minutes = int(Dm_build_931.Dm_build_1033(bytes, 8))
-		dt.seconds = int(Dm_build_931.Dm_build_1033(bytes, 12))
-		dt.fraction = int(Dm_build_931.Dm_build_1033(bytes, 16))
+		dt.minutes = int(Dm_build_650.Dm_build_752(bytes, 8))
+		dt.seconds = int(Dm_build_650.Dm_build_752(bytes, 12))
+		dt.fraction = int(Dm_build_650.Dm_build_752(bytes, 16))
 	case QUA_S:
-		dt.seconds = int(Dm_build_931.Dm_build_1033(bytes, 12))
-		dt.fraction = int(Dm_build_931.Dm_build_1033(bytes, 16))
+		dt.seconds = int(Dm_build_650.Dm_build_752(bytes, 12))
+		dt.fraction = int(Dm_build_650.Dm_build_752(bytes, 16))
 	}
 	if dt.days < 0 {
 		dt.days = -dt.days
@@ -319,48 +319,48 @@ func NewDmIntervalDTByString(str string) (dt *DmIntervalDT, err error) {
 	return nil, ECGO_INVALID_TIME_INTERVAL.throw()
 }
 
-func (dest *DmIntervalDT) GetDay() int {
-	return dest.days
+func (dt *DmIntervalDT) GetDay() int {
+	return dt.days
 }
 
-func (dest *DmIntervalDT) GetHour() int {
-	return dest.hours
+func (dt *DmIntervalDT) GetHour() int {
+	return dt.hours
 }
 
-func (dest *DmIntervalDT) GetMinute() int {
-	return dest.minutes
+func (dt *DmIntervalDT) GetMinute() int {
+	return dt.minutes
 }
 
-func (dest *DmIntervalDT) GetSecond() int {
-	return dest.seconds
+func (dt *DmIntervalDT) GetSecond() int {
+	return dt.seconds
 }
 
-func (dest *DmIntervalDT) GetMsec() int {
-	return dest.fraction
+func (dt *DmIntervalDT) GetMsec() int {
+	return dt.fraction
 }
 
-func (dest *DmIntervalDT) GetDTType() byte {
-	return dest._type
+func (dt *DmIntervalDT) GetDTType() byte {
+	return dt._type
 }
 
-func (dest *DmIntervalDT) String() string {
-	if !dest.Valid {
+func (dt *DmIntervalDT) String() string {
+	if !dt.Valid {
 		return ""
 	}
 	var l, destLen int
 	var dStr, hStr, mStr, sStr, nStr string
 	interval := "INTERVAL "
 
-	switch dest._type {
+	switch dt._type {
 	case QUA_D:
-		dStr := strconv.FormatInt(int64(float64(dest.days)), 10)
-		if dest.negative {
+		dStr := strconv.FormatInt(int64(float64(dt.days)), 10)
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(dStr) < dest.leadScale {
+		if len(dStr) < dt.leadScale {
 			l = len(dStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				dStr = "0" + dStr
@@ -368,18 +368,18 @@ func (dest *DmIntervalDT) String() string {
 			}
 		}
 
-		interval += "'" + dStr + "' DAY(" + strconv.FormatInt(int64(dest.leadScale), 10) + ")"
+		interval += "'" + dStr + "' DAY(" + strconv.FormatInt(int64(dt.leadScale), 10) + ")"
 	case QUA_DH:
-		dStr = strconv.FormatInt(int64(float64(dest.days)), 10)
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
+		dStr = strconv.FormatInt(int64(float64(dt.days)), 10)
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(dStr) < dest.leadScale {
+		if len(dStr) < dt.leadScale {
 			l = len(dStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				dStr = "0" + dStr
@@ -391,19 +391,19 @@ func (dest *DmIntervalDT) String() string {
 			hStr = "0" + hStr
 		}
 
-		interval += "'" + dStr + " " + hStr + "' DAY(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO HOUR"
+		interval += "'" + dStr + " " + hStr + "' DAY(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO HOUR"
 	case QUA_DHM:
-		dStr = strconv.FormatInt(int64(float64(dest.days)), 10)
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
+		dStr = strconv.FormatInt(int64(float64(dt.days)), 10)
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(dStr) < dest.leadScale {
+		if len(dStr) < dt.leadScale {
 			l = len(dStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				dStr = "0" + dStr
@@ -416,20 +416,20 @@ func (dest *DmIntervalDT) String() string {
 		if len(mStr) < 2 {
 			mStr = "0" + mStr
 		}
-		interval += "'" + dStr + " " + hStr + ":" + mStr + "' DAY(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO MINUTE"
+		interval += "'" + dStr + " " + hStr + ":" + mStr + "' DAY(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO MINUTE"
 	case QUA_DHMS:
-		dStr = strconv.FormatInt(int64(float64(dest.days)), 10)
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
-		sStr = strconv.FormatInt(int64(float64(dest.seconds)), 10)
-		nStr = dest.getMsecString()
-		if dest.negative {
+		dStr = strconv.FormatInt(int64(float64(dt.days)), 10)
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
+		sStr = strconv.FormatInt(int64(float64(dt.seconds)), 10)
+		nStr = dt.getMsecString()
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(dStr) < dest.leadScale {
+		if len(dStr) < dt.leadScale {
 			l = len(dStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				dStr = "0" + dStr
@@ -450,16 +450,16 @@ func (dest *DmIntervalDT) String() string {
 			interval += "." + nStr
 		}
 
-		interval += "' DAY(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dest.secScale), 10) + ")"
+		interval += "' DAY(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dt.secScale), 10) + ")"
 	case QUA_H:
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
-		if dest.negative {
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(hStr) < dest.leadScale {
+		if len(hStr) < dt.leadScale {
 			l = len(hStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				hStr = "0" + hStr
@@ -467,18 +467,18 @@ func (dest *DmIntervalDT) String() string {
 			}
 		}
 
-		interval += "'" + hStr + "' HOUR(" + strconv.FormatInt(int64(dest.leadScale), 10) + ")"
+		interval += "'" + hStr + "' HOUR(" + strconv.FormatInt(int64(dt.leadScale), 10) + ")"
 	case QUA_HM:
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(hStr) < dest.leadScale {
+		if len(hStr) < dt.leadScale {
 			l = len(hStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				hStr = "0" + hStr
@@ -489,20 +489,20 @@ func (dest *DmIntervalDT) String() string {
 			mStr = "0" + mStr
 		}
 
-		interval += "'" + hStr + ":" + mStr + "' HOUR(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO MINUTE"
+		interval += "'" + hStr + ":" + mStr + "' HOUR(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO MINUTE"
 	case QUA_HMS:
-		nStr = dest.getMsecString()
-		hStr = strconv.FormatInt(int64(float64(dest.hours)), 10)
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
-		sStr = strconv.FormatInt(int64(float64(dest.seconds)), 10)
+		nStr = dt.getMsecString()
+		hStr = strconv.FormatInt(int64(float64(dt.hours)), 10)
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
+		sStr = strconv.FormatInt(int64(float64(dt.seconds)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(hStr) < dest.leadScale {
+		if len(hStr) < dt.leadScale {
 			l = len(hStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				hStr = "0" + hStr
@@ -521,18 +521,18 @@ func (dest *DmIntervalDT) String() string {
 			interval += "." + nStr
 		}
 
-		interval += "' HOUR(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dest.secScale), 10) + ")"
+		interval += "' HOUR(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dt.secScale), 10) + ")"
 
 	case QUA_M:
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(mStr) < dest.leadScale {
+		if len(mStr) < dt.leadScale {
 			l = len(mStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				mStr = "0" + mStr
@@ -540,19 +540,19 @@ func (dest *DmIntervalDT) String() string {
 			}
 		}
 
-		interval += "'" + mStr + "' MINUTE(" + strconv.FormatInt(int64(dest.leadScale), 10) + ")"
+		interval += "'" + mStr + "' MINUTE(" + strconv.FormatInt(int64(dt.leadScale), 10) + ")"
 	case QUA_MS:
-		nStr = dest.getMsecString()
-		mStr = strconv.FormatInt(int64(float64(dest.minutes)), 10)
-		sStr = strconv.FormatInt(int64(float64(dest.seconds)), 10)
+		nStr = dt.getMsecString()
+		mStr = strconv.FormatInt(int64(float64(dt.minutes)), 10)
+		sStr = strconv.FormatInt(int64(float64(dt.seconds)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(mStr) < dest.leadScale {
+		if len(mStr) < dt.leadScale {
 			l = len(mStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				mStr = "0" + mStr
@@ -567,18 +567,18 @@ func (dest *DmIntervalDT) String() string {
 			interval += "." + nStr
 		}
 
-		interval += "' MINUTE(" + strconv.FormatInt(int64(dest.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dest.secScale), 10) + ")"
+		interval += "' MINUTE(" + strconv.FormatInt(int64(dt.leadScale), 10) + ") TO SECOND(" + strconv.FormatInt(int64(dt.secScale), 10) + ")"
 	case QUA_S:
-		nStr = dest.getMsecString()
-		sStr = strconv.FormatInt(int64(float64(dest.seconds)), 10)
+		nStr = dt.getMsecString()
+		sStr = strconv.FormatInt(int64(float64(dt.seconds)), 10)
 
-		if dest.negative {
+		if dt.negative {
 			interval += "-"
 		}
 
-		if len(sStr) < dest.leadScale {
+		if len(sStr) < dt.leadScale {
 			l = len(sStr)
-			destLen = dest.leadScale
+			destLen = dt.leadScale
 
 			for destLen > l {
 				sStr = "0" + sStr
@@ -592,7 +592,7 @@ func (dest *DmIntervalDT) String() string {
 			interval += "." + nStr
 		}
 
-		interval += "' SECOND(" + strconv.FormatInt(int64(dest.leadScale), 10) + ", " + strconv.FormatInt(int64(dest.secScale), 10) + ")"
+		interval += "' SECOND(" + strconv.FormatInt(int64(dt.leadScale), 10) + ", " + strconv.FormatInt(int64(dt.secScale), 10) + ")"
 
 	}
 
@@ -624,101 +624,101 @@ func (dest *DmIntervalDT) Scan(src interface{}) error {
 	}
 }
 
-func (dest DmIntervalDT) Value() (driver.Value, error) {
-	if !dest.Valid {
+func (dt DmIntervalDT) Value() (driver.Value, error) {
+	if !dt.Valid {
 		return nil, nil
 	}
-	return dest, nil
+	return dt, nil
 }
 
-func (dest *DmIntervalDT) checkScale(leadScale int) (int, error) {
-	switch dest._type {
+func (dt *DmIntervalDT) checkScale(leadScale int) (int, error) {
+	switch dt._type {
 	case QUA_D:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_DH:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
-		if int64(math.Abs(float64(dest.hours))) > 23 {
+		if int64(math.Abs(float64(dt.hours))) > 23 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_DHM:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
-		if int64(math.Abs(float64(dest.hours))) > 23 || int64(math.Abs(float64(dest.minutes))) > 59 {
+		if int64(math.Abs(float64(dt.hours))) > 23 || int64(math.Abs(float64(dt.minutes))) > 59 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_DHMS:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.days))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.days))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
-		if int64(math.Abs(float64(dest.hours))) > 23 || int64(math.Abs(float64(dest.minutes))) > 59 ||
-			int64(math.Abs(float64(dest.seconds))) > 59 {
+		if int64(math.Abs(float64(dt.hours))) > 23 || int64(math.Abs(float64(dt.minutes))) > 59 ||
+			int64(math.Abs(float64(dt.seconds))) > 59 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_H:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_HM:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
-		if int64(math.Abs(float64(dest.minutes))) > 59 {
+		if int64(math.Abs(float64(dt.minutes))) > 59 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_HMS:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.hours))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.hours))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
-		if int64(math.Abs(float64(dest.minutes))) > 59 || int64(math.Abs(float64(dest.seconds))) > 59 {
+		if int64(math.Abs(float64(dt.minutes))) > 59 || int64(math.Abs(float64(dt.seconds))) > 59 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_M:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 
 	case QUA_MS:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
-		if int64(math.Abs(float64(dest.seconds))) > 59 {
+		if int64(math.Abs(float64(dt.seconds))) > 59 {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 	case QUA_S:
 		if leadScale == -1 {
-			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10))
-		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dest.minutes))), 10)) {
+			leadScale = len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10))
+		} else if leadScale < len(strconv.FormatInt(int64(math.Abs(float64(dt.minutes))), 10)) {
 			return 0, ECGO_INVALID_TIME_INTERVAL.throw()
 		}
 	}
@@ -729,7 +729,7 @@ func (dest *DmIntervalDT) checkScale(leadScale int) (int, error) {
 	return leadScale, nil
 }
 
-func (dest *DmIntervalDT) parsePrec(leadStr string) (int, error) {
+func (dt *DmIntervalDT) parsePrec(leadStr string) (int, error) {
 	leftBtId := strings.Index(leadStr, "(")
 	rightBtId := strings.Index(leadStr, ")")
 	var prec int64 = -1
@@ -746,117 +746,117 @@ func (dest *DmIntervalDT) parsePrec(leadStr string) (int, error) {
 	return int(prec), nil
 }
 
-func (dest *DmIntervalDT) setPrecForSvr(_ string, leadScale string, secScale string) error {
-	prec, err := dest.parsePrec(leadScale)
+func (dt *DmIntervalDT) setPrecForSvr(_ string, leadScale string, secScale string) error {
+	prec, err := dt.parsePrec(leadScale)
 	if err != nil {
 		return err
 	}
 
-	prec, err = dest.checkScale(prec)
+	prec, err = dt.checkScale(prec)
 	if err != nil {
 		return err
 	}
 
 	if prec < LOADPREC_DEFAULT {
-		dest.leadScale = LOADPREC_DEFAULT
+		dt.leadScale = LOADPREC_DEFAULT
 	} else {
-		dest.leadScale = prec
+		dt.leadScale = prec
 	}
 
-	prec, err = dest.parsePrec(secScale)
+	prec, err = dt.parsePrec(secScale)
 	if err != nil {
 		return err
 	}
 
 	if prec >= 0 && prec < SECDPREC_MAX {
-		dest.secScale = prec
+		dt.secScale = prec
 	} else {
-		dest.secScale = SECDPREC_DEFAULT
+		dt.secScale = SECDPREC_DEFAULT
 	}
 
-	dest.scaleForSvr = (int(dest._type) << 8) + (dest.leadScale << 4) + dest.secScale
+	dt.scaleForSvr = (int(dt._type) << 8) + (dt.leadScale << 4) + dt.secScale
 	return nil
 }
 
-func (dest *DmIntervalDT) checkSign(str string) string {
+func (dt *DmIntervalDT) checkSign(str string) string {
 
 	if str[0] == '-' {
 		str = strings.TrimSpace(str[1:])
-		dest.negative = true
+		dt.negative = true
 	} else if str[0] == '+' {
 		str = strings.TrimSpace(str[1:])
-		dest.negative = false
+		dt.negative = false
 	}
 
 	return str
 }
 
-func (dest *DmIntervalDT) setDay(value string) error {
+func (dt *DmIntervalDT) setDay(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 1 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_D
+	dt._type = QUA_D
 	i, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return err
 	}
 
 	if i < 0 {
-		dest.days = int(-i)
-		dest.negative = true
+		dt.days = int(-i)
+		dt.negative = true
 	} else {
-		dest.days = int(i)
+		dt.days = int(i)
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setHour(value string) error {
+func (dt *DmIntervalDT) setHour(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 1 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_H
+	dt._type = QUA_H
 	i, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return err
 	}
 
 	if i < 0 {
-		dest.hours = int(-i)
-		dest.negative = true
+		dt.hours = int(-i)
+		dt.negative = true
 	} else {
-		dest.hours = int(i)
+		dt.hours = int(i)
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setMinute(value string) error {
+func (dt *DmIntervalDT) setMinute(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 1 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_M
+	dt._type = QUA_M
 	i, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return err
 	}
 
 	if i < 0 {
-		dest.minutes = int(-i)
-		dest.negative = true
+		dt.minutes = int(-i)
+		dt.negative = true
 	} else {
-		dest.minutes = int(i)
+		dt.minutes = int(i)
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setSecond(value string) error {
+func (dt *DmIntervalDT) setSecond(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 2 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_S
+	dt._type = QUA_S
 	i, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
 		return err
@@ -869,33 +869,33 @@ func (dest *DmIntervalDT) setSecond(value string) error {
 		if err != nil {
 			return err
 		}
-		nx := math.Pow10(dest.secScale)
+		nx := math.Pow10(dt.secScale)
 		nano = (int)(d_v * nx)
 	}
 
 	if i < 0 {
-		dest.seconds = int(-i)
+		dt.seconds = int(-i)
 	} else {
-		dest.seconds = int(i)
+		dt.seconds = int(i)
 	}
 	if nano < 0 {
-		dest.fraction = -nano
+		dt.fraction = -nano
 	} else {
-		dest.fraction = nano
+		dt.fraction = nano
 	}
 	if i < 0 || nano < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 
 }
 
-func (dest *DmIntervalDT) setHourToSecond(value string) error {
+func (dt *DmIntervalDT) setHourToSecond(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 4 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_HMS
+	dt._type = QUA_HMS
 
 	h, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -918,43 +918,43 @@ func (dest *DmIntervalDT) setHourToSecond(value string) error {
 		if err != nil {
 			return err
 		}
-		nx := math.Pow10(dest.secScale)
+		nx := math.Pow10(dt.secScale)
 		nano = (int)(d_v * nx)
 	}
 
 	if h < 0 {
-		dest.hours = int(-h)
+		dt.hours = int(-h)
 	} else {
-		dest.hours = int(h)
+		dt.hours = int(h)
 	}
 	if m < 0 {
-		dest.minutes = int(-m)
+		dt.minutes = int(-m)
 	} else {
-		dest.minutes = int(m)
+		dt.minutes = int(m)
 	}
 	if s < 0 {
-		dest.seconds = int(-s)
+		dt.seconds = int(-s)
 	} else {
-		dest.seconds = int(s)
+		dt.seconds = int(s)
 	}
 	if nano < 0 {
-		dest.fraction = -nano
+		dt.fraction = -nano
 	} else {
-		dest.fraction = nano
+		dt.fraction = nano
 	}
 	if h < 0 || m < 0 || s < 0 || nano < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setHourToMinute(value string) error {
+func (dt *DmIntervalDT) setHourToMinute(value string) error {
 	value = strings.TrimSpace(value)
 	list := util.Split(value, " :.")
 	if len(list) > 2 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_HM
+	dt._type = QUA_HM
 
 	h, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -967,27 +967,27 @@ func (dest *DmIntervalDT) setHourToMinute(value string) error {
 	}
 
 	if h < 0 {
-		dest.hours = int(-h)
+		dt.hours = int(-h)
 	} else {
-		dest.hours = int(h)
+		dt.hours = int(h)
 	}
 	if m < 0 {
-		dest.minutes = int(-m)
+		dt.minutes = int(-m)
 	} else {
-		dest.minutes = int(m)
+		dt.minutes = int(m)
 	}
 	if h < 0 || m < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setMinuteToSecond(value string) error {
+func (dt *DmIntervalDT) setMinuteToSecond(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 3 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_MS
+	dt._type = QUA_MS
 
 	m, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -1007,37 +1007,37 @@ func (dest *DmIntervalDT) setMinuteToSecond(value string) error {
 			return err
 		}
 
-		nx := math.Pow10(dest.secScale)
+		nx := math.Pow10(dt.secScale)
 		nano = (int)(d_v * nx)
 	}
 
 	if m < 0 {
-		dest.minutes = int(-m)
+		dt.minutes = int(-m)
 	} else {
-		dest.minutes = int(m)
+		dt.minutes = int(m)
 	}
 	if s < 0 {
-		dest.seconds = int(-s)
+		dt.seconds = int(-s)
 	} else {
-		dest.seconds = int(s)
+		dt.seconds = int(s)
 	}
 	if nano < 0 {
-		dest.fraction = -nano
+		dt.fraction = -nano
 	} else {
-		dest.fraction = nano
+		dt.fraction = nano
 	}
 	if m < 0 || s < 0 || nano < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setDayToHour(value string) error {
+func (dt *DmIntervalDT) setDayToHour(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 2 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_DH
+	dt._type = QUA_DH
 
 	d, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -1050,27 +1050,27 @@ func (dest *DmIntervalDT) setDayToHour(value string) error {
 	}
 
 	if d < 0 {
-		dest.days = int(-d)
+		dt.days = int(-d)
 	} else {
-		dest.days = int(d)
+		dt.days = int(d)
 	}
 	if h < 0 {
-		dest.hours = int(-h)
+		dt.hours = int(-h)
 	} else {
-		dest.hours = int(h)
+		dt.hours = int(h)
 	}
 	if d < 0 || h < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setDayToMinute(value string) error {
+func (dt *DmIntervalDT) setDayToMinute(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 3 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_DHM
+	dt._type = QUA_DHM
 
 	d, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -1088,32 +1088,32 @@ func (dest *DmIntervalDT) setDayToMinute(value string) error {
 	}
 
 	if d < 0 {
-		dest.days = int(-d)
+		dt.days = int(-d)
 	} else {
-		dest.days = int(d)
+		dt.days = int(d)
 	}
 	if h < 0 {
-		dest.hours = int(-h)
+		dt.hours = int(-h)
 	} else {
-		dest.hours = int(h)
+		dt.hours = int(h)
 	}
 	if m < 0 {
-		dest.minutes = int(-m)
+		dt.minutes = int(-m)
 	} else {
-		dest.minutes = int(m)
+		dt.minutes = int(m)
 	}
 	if d < 0 || h < 0 || m < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) setDayToSecond(value string) error {
+func (dt *DmIntervalDT) setDayToSecond(value string) error {
 	list := util.Split(value, " :.")
 	if len(list) > 5 {
 		return ECGO_INVALID_TIME_INTERVAL.throw()
 	}
-	dest._type = QUA_DHMS
+	dt._type = QUA_DHMS
 
 	d, err := strconv.ParseInt(list[0], 10, 32)
 	if err != nil {
@@ -1143,93 +1143,93 @@ func (dest *DmIntervalDT) setDayToSecond(value string) error {
 			return err
 		}
 
-		nx := math.Pow10(dest.secScale)
+		nx := math.Pow10(dt.secScale)
 		nano = (int)(d_v * nx)
 	}
 
 	if d < 0 {
-		dest.days = int(-d)
+		dt.days = int(-d)
 	} else {
-		dest.days = int(d)
+		dt.days = int(d)
 	}
 	if h < 0 {
-		dest.hours = int(-h)
+		dt.hours = int(-h)
 	} else {
-		dest.hours = int(h)
+		dt.hours = int(h)
 	}
 	if m < 0 {
-		dest.minutes = int(-m)
+		dt.minutes = int(-m)
 	} else {
-		dest.minutes = int(m)
+		dt.minutes = int(m)
 	}
 	if s < 0 {
-		dest.seconds = int(-s)
+		dt.seconds = int(-s)
 	} else {
-		dest.seconds = int(s)
+		dt.seconds = int(s)
 	}
 	if nano < 0 {
-		dest.fraction = -nano
+		dt.fraction = -nano
 	} else {
-		dest.fraction = nano
+		dt.fraction = nano
 	}
 	if d < 0 || h < 0 || m < 0 || s < 0 || nano < 0 {
-		dest.negative = true
+		dt.negative = true
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) getMsecString() string {
-	nano := strconv.Itoa(dest.fraction)
+func (dt *DmIntervalDT) getMsecString() string {
+	nano := strconv.Itoa(dt.fraction)
 
 	for i := 6 - len(nano); i > 0; i-- {
 		nano = "0" + nano
 	}
 
-	if len(nano) > dest.secScale {
-		nano = nano[:dest.secScale]
+	if len(nano) > dt.secScale {
+		nano = nano[:dt.secScale]
 	}
 
 	return nano
 }
 
-func (dest *DmIntervalDT) encode(scale int) ([]byte, error) {
+func (dt *DmIntervalDT) encode(scale int) ([]byte, error) {
 	if scale == 0 {
-		scale = dest.scaleForSvr
+		scale = dt.scaleForSvr
 	}
-	day, hour, minute, second, f := dest.days, dest.hours, dest.minutes, dest.seconds, dest.fraction
-	if scale != dest.scaleForSvr {
-		convertDT, err := dest.convertTo(scale)
+	day, hour, minute, second, f := dt.days, dt.hours, dt.minutes, dt.seconds, dt.fraction
+	if scale != dt.scaleForSvr {
+		convertDT, err := dt.convertTo(scale)
 		if err != nil {
 			return nil, err
 		}
 		day, hour, minute, second, f = convertDT.days, convertDT.hours, convertDT.minutes, convertDT.seconds, convertDT.fraction
 	} else {
 		loadPrec := (scale >> 4) & 0x0000000F
-		if _, err := dest.checkScale(loadPrec); err != nil {
+		if _, err := dt.checkScale(loadPrec); err != nil {
 			return nil, err
 		}
 	}
 
 	bytes := make([]byte, 24)
-	if dest.negative {
-		Dm_build_931.Dm_build_947(bytes, 0, int32(-day))
-		Dm_build_931.Dm_build_947(bytes, 4, int32(-hour))
-		Dm_build_931.Dm_build_947(bytes, 8, int32(-minute))
-		Dm_build_931.Dm_build_947(bytes, 12, int32(-second))
-		Dm_build_931.Dm_build_947(bytes, 16, int32(-f))
-		Dm_build_931.Dm_build_947(bytes, 20, int32(scale))
+	if dt.negative {
+		Dm_build_650.Dm_build_666(bytes, 0, int32(-day))
+		Dm_build_650.Dm_build_666(bytes, 4, int32(-hour))
+		Dm_build_650.Dm_build_666(bytes, 8, int32(-minute))
+		Dm_build_650.Dm_build_666(bytes, 12, int32(-second))
+		Dm_build_650.Dm_build_666(bytes, 16, int32(-f))
+		Dm_build_650.Dm_build_666(bytes, 20, int32(scale))
 	} else {
-		Dm_build_931.Dm_build_947(bytes, 0, int32(day))
-		Dm_build_931.Dm_build_947(bytes, 4, int32(hour))
-		Dm_build_931.Dm_build_947(bytes, 8, int32(minute))
-		Dm_build_931.Dm_build_947(bytes, 12, int32(second))
-		Dm_build_931.Dm_build_947(bytes, 16, int32(f))
-		Dm_build_931.Dm_build_947(bytes, 20, int32(scale))
+		Dm_build_650.Dm_build_666(bytes, 0, int32(day))
+		Dm_build_650.Dm_build_666(bytes, 4, int32(hour))
+		Dm_build_650.Dm_build_666(bytes, 8, int32(minute))
+		Dm_build_650.Dm_build_666(bytes, 12, int32(second))
+		Dm_build_650.Dm_build_666(bytes, 16, int32(f))
+		Dm_build_650.Dm_build_666(bytes, 20, int32(scale))
 	}
 	return bytes, nil
 }
 
-func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
+func (dt *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 	destType := (scale & 0x0000FF00) >> 8
 	leadPrec := (scale >> 4) & 0x0000000F
 	secScale := scale & 0x0000000F
@@ -1241,51 +1241,51 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 	orgDT := make([]int, 5)
 	destDT := make([]int, 5)
 
-	switch dest._type {
+	switch dt._type {
 	case QUA_D:
-		orgDT[dayIndex] = dest.days
+		orgDT[dayIndex] = dt.days
 	case QUA_DH:
-		orgDT[dayIndex] = dest.days
-		orgDT[hourIndex] = dest.hours
+		orgDT[dayIndex] = dt.days
+		orgDT[hourIndex] = dt.hours
 	case QUA_DHM:
-		orgDT[dayIndex] = dest.days
-		orgDT[hourIndex] = dest.hours
-		orgDT[minuteIndex] = dest.minutes
+		orgDT[dayIndex] = dt.days
+		orgDT[hourIndex] = dt.hours
+		orgDT[minuteIndex] = dt.minutes
 	case QUA_DHMS:
-		orgDT[dayIndex] = dest.days
-		orgDT[hourIndex] = dest.hours
-		orgDT[minuteIndex] = dest.minutes
-		orgDT[secondIndex] = dest.seconds
-		orgDT[fractionIndex] = dest.fraction
+		orgDT[dayIndex] = dt.days
+		orgDT[hourIndex] = dt.hours
+		orgDT[minuteIndex] = dt.minutes
+		orgDT[secondIndex] = dt.seconds
+		orgDT[fractionIndex] = dt.fraction
 	case QUA_H:
-		orgDT[dayIndex] = dest.hours / 24
-		orgDT[hourIndex] = dest.hours % 24
+		orgDT[dayIndex] = dt.hours / 24
+		orgDT[hourIndex] = dt.hours % 24
 	case QUA_HM:
-		orgDT[dayIndex] = dest.hours / 24
-		orgDT[hourIndex] = dest.hours % 24
-		orgDT[minuteIndex] = dest.minutes
+		orgDT[dayIndex] = dt.hours / 24
+		orgDT[hourIndex] = dt.hours % 24
+		orgDT[minuteIndex] = dt.minutes
 	case QUA_HMS:
-		orgDT[dayIndex] = dest.hours / 24
-		orgDT[hourIndex] = dest.hours % 24
-		orgDT[minuteIndex] = dest.minutes
-		orgDT[secondIndex] = dest.seconds
-		orgDT[fractionIndex] = dest.fraction
+		orgDT[dayIndex] = dt.hours / 24
+		orgDT[hourIndex] = dt.hours % 24
+		orgDT[minuteIndex] = dt.minutes
+		orgDT[secondIndex] = dt.seconds
+		orgDT[fractionIndex] = dt.fraction
 	case QUA_M:
-		orgDT[dayIndex] = dest.minutes / (24 * 60)
-		orgDT[hourIndex] = (dest.minutes % (24 * 60)) / 60
-		orgDT[minuteIndex] = (dest.minutes % (24 * 60)) % 60
+		orgDT[dayIndex] = dt.minutes / (24 * 60)
+		orgDT[hourIndex] = (dt.minutes % (24 * 60)) / 60
+		orgDT[minuteIndex] = (dt.minutes % (24 * 60)) % 60
 	case QUA_MS:
-		orgDT[dayIndex] = dest.minutes / (24 * 60)
-		orgDT[hourIndex] = (dest.minutes % (24 * 60)) / 60
-		orgDT[minuteIndex] = (dest.minutes % (24 * 60)) % 60
-		orgDT[secondIndex] = dest.seconds
-		orgDT[fractionIndex] = dest.fraction
+		orgDT[dayIndex] = dt.minutes / (24 * 60)
+		orgDT[hourIndex] = (dt.minutes % (24 * 60)) / 60
+		orgDT[minuteIndex] = (dt.minutes % (24 * 60)) % 60
+		orgDT[secondIndex] = dt.seconds
+		orgDT[fractionIndex] = dt.fraction
 	case QUA_S:
-		orgDT[dayIndex] = dest.seconds / (24 * 60 * 60)
-		orgDT[hourIndex] = (dest.seconds % (24 * 60 * 60)) / (60 * 60)
-		orgDT[minuteIndex] = ((dest.seconds % (24 * 60 * 60)) % (60 * 60)) / 60
-		orgDT[secondIndex] = ((dest.seconds % (24 * 60 * 60)) % (60 * 60)) % 60
-		orgDT[fractionIndex] = dest.fraction
+		orgDT[dayIndex] = dt.seconds / (24 * 60 * 60)
+		orgDT[hourIndex] = (dt.seconds % (24 * 60 * 60)) / (60 * 60)
+		orgDT[minuteIndex] = ((dt.seconds % (24 * 60 * 60)) % (60 * 60)) / 60
+		orgDT[secondIndex] = ((dt.seconds % (24 * 60 * 60)) % (60 * 60)) % 60
+		orgDT[fractionIndex] = dt.fraction
 	}
 
 	switch byte(destType) {
@@ -1322,7 +1322,7 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 		destDT[minuteIndex] = orgDT[minuteIndex]
 		destDT[secondIndex] = orgDT[secondIndex]
 		destDT[fractionIndex] = orgDT[fractionIndex]
-		dest.convertMSecond(QUA_DHMS, destDT, secScale)
+		dt.convertMSecond(QUA_DHMS, destDT, secScale)
 		if leadPrec < len(strconv.Itoa(int(math.Abs(float64(destDT[dayIndex]))))) {
 			return nil, ECGO_INTERVAL_OVERFLOW.throw()
 		}
@@ -1348,7 +1348,7 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 		destDT[minuteIndex] = orgDT[minuteIndex]
 		destDT[secondIndex] = orgDT[secondIndex]
 		destDT[fractionIndex] = orgDT[fractionIndex]
-		dest.convertMSecond(QUA_HMS, destDT, secScale)
+		dt.convertMSecond(QUA_HMS, destDT, secScale)
 		if leadPrec < len(strconv.Itoa(int(math.Abs(float64(destDT[hourIndex]))))) {
 			return nil, ECGO_INTERVAL_OVERFLOW.throw()
 		}
@@ -1364,14 +1364,14 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 		destDT[minuteIndex] = orgDT[dayIndex]*24*60 + orgDT[hourIndex]*60 + orgDT[minuteIndex]
 		destDT[secondIndex] = orgDT[secondIndex]
 		destDT[fractionIndex] = orgDT[fractionIndex]
-		dest.convertMSecond(QUA_MS, destDT, secScale)
+		dt.convertMSecond(QUA_MS, destDT, secScale)
 		if leadPrec < len(strconv.Itoa(int(math.Abs(float64(destDT[minuteIndex]))))) {
 			return nil, ECGO_INTERVAL_OVERFLOW.throw()
 		}
 	case QUA_S:
 		destDT[secondIndex] = orgDT[dayIndex]*24*60*60 + orgDT[hourIndex]*60*60 + orgDT[minuteIndex]*60 + orgDT[secondIndex]
 		destDT[fractionIndex] = orgDT[fractionIndex]
-		dest.convertMSecond(QUA_S, destDT, secScale)
+		dt.convertMSecond(QUA_S, destDT, secScale)
 		if leadPrec < len(strconv.Itoa(int(math.Abs(float64(destDT[secondIndex]))))) {
 			return nil, ECGO_INTERVAL_OVERFLOW.throw()
 		}
@@ -1379,7 +1379,7 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 
 	return &DmIntervalDT{
 		_type:       byte(destType),
-		negative:    dest.negative,
+		negative:    dt.negative,
 		leadScale:   (scale >> 4) & 0x0000000F,
 		secScale:    scale & 0x0000000F,
 		scaleForSvr: scale,
@@ -1392,10 +1392,10 @@ func (dest *DmIntervalDT) convertTo(scale int) (*DmIntervalDT, error) {
 	}, nil
 }
 
-func (dest DmIntervalDT) convertMSecond(destType byte, destDT []int, destSecScale int) {
+func (dt DmIntervalDT) convertMSecond(destType byte, destDT []int, destSecScale int) {
 	fractionIndex := 4
 	orgFraction := destDT[fractionIndex]
-	if destSecScale == 0 || destSecScale < dest.secScale {
+	if destSecScale == 0 || destSecScale < dt.secScale {
 		n := int(math.Pow(10, 6-float64(destSecScale)-1))
 		f := orgFraction / n / 10
 
@@ -1444,13 +1444,13 @@ func incrementSecond(destType byte, dt []int) {
 	}
 }
 
-func (dest *DmIntervalDT) checkValid() error {
-	if !dest.Valid {
+func (dt *DmIntervalDT) checkValid() error {
+	if !dt.Valid {
 		return ECGO_IS_NULL.throw()
 	}
 	return nil
 }
 
-func (dest *DmIntervalDT) GormDataType() string {
+func (d *DmIntervalDT) GormDataType() string {
 	return "INTERVAL DAY TO SECOND"
 }

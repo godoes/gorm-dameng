@@ -55,29 +55,29 @@ func newDmStructByTypeData(atData []TypeData, desc *TypeDescriptor) *DmStruct {
 	return ds
 }
 
-func (ds *DmStruct) Scan(src interface{}) error {
-	if ds == nil {
+func (dest *DmStruct) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*ds = *new(DmStruct)
+		*dest = *new(DmStruct)
 		// 将Valid标志置false表示数据库中该列为NULL
-		(*ds).Valid = false
+		(*dest).Valid = false
 		return nil
 	case *DmStruct:
-		*ds = *src
+		*dest = *src
 		return nil
 	default:
 		return UNSUPPORTED_SCAN.throw()
 	}
 }
 
-func (ds DmStruct) Value() (driver.Value, error) {
-	if !ds.Valid {
+func (dt DmStruct) Value() (driver.Value, error) {
+	if !dt.Valid {
 		return nil, nil
 	}
-	return ds, nil
+	return dt, nil
 }
 
 func (ds *DmStruct) getAttribsTypeData() []TypeData {

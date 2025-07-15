@@ -36,8 +36,8 @@ func (dk *DhKey) GetYBytes() []byte {
 		return nil
 	}
 	if dk.group != nil {
-		bLen := (dk.group.p.BitLen() + 7) / 8
-		ret := make([]byte, bLen)
+		blen := (dk.group.p.BitLen() + 7) / 8
+		ret := make([]byte, blen)
 		copyWithLeftPad(ret, dk.y.Bytes())
 		return ret
 	}

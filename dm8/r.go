@@ -54,17 +54,17 @@ func NewDmIntervalYMByString(str string) (ym *DmIntervalYM, err error) {
 func newDmIntervalYMByBytes(bytes []byte) *DmIntervalYM {
 	ym := newDmIntervalYM()
 
-	ym.scaleForSvr = int(Dm_build_931.Dm_build_1033(bytes, 8))
+	ym.scaleForSvr = int(Dm_build_650.Dm_build_752(bytes, 8))
 	ym.leadScale = (ym.scaleForSvr >> 4) & 0x0000000F
 	ym._type = bytes[9]
 	switch ym._type {
 	case QUA_Y:
-		ym.years = int(Dm_build_931.Dm_build_1033(bytes, 0))
+		ym.years = int(Dm_build_650.Dm_build_752(bytes, 0))
 	case QUA_YM:
-		ym.years = int(Dm_build_931.Dm_build_1033(bytes, 0))
-		ym.months = int(Dm_build_931.Dm_build_1033(bytes, 4))
+		ym.years = int(Dm_build_650.Dm_build_752(bytes, 0))
+		ym.months = int(Dm_build_650.Dm_build_752(bytes, 4))
 	case QUA_MO:
-		ym.months = int(Dm_build_931.Dm_build_1033(bytes, 4))
+		ym.months = int(Dm_build_650.Dm_build_752(bytes, 4))
 	}
 	return ym
 }
@@ -152,25 +152,25 @@ func (ym *DmIntervalYM) String() string {
 	return str
 }
 
-func (ym *DmIntervalYM) Scan(src interface{}) error {
-	if ym == nil {
+func (dest *DmIntervalYM) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*ym = *new(DmIntervalYM)
+		*dest = *new(DmIntervalYM)
 
-		(*ym).Valid = false
+		(*dest).Valid = false
 		return nil
 	case *DmIntervalYM:
-		*ym = *src
+		*dest = *src
 		return nil
 	case string:
 		ret, err := NewDmIntervalYMByString(src)
 		if err != nil {
 			return err
 		}
-		*ym = *ret
+		*dest = *ret
 		return nil
 	default:
 		return UNSUPPORTED_SCAN
@@ -437,9 +437,9 @@ func (ym *DmIntervalYM) encode(scale int) ([]byte, error) {
 	}
 
 	bytes := make([]byte, 12)
-	Dm_build_931.Dm_build_947(bytes, 0, int32(year))
-	Dm_build_931.Dm_build_947(bytes, 4, int32(month))
-	Dm_build_931.Dm_build_947(bytes, 8, int32(scale))
+	Dm_build_650.Dm_build_666(bytes, 0, int32(year))
+	Dm_build_650.Dm_build_666(bytes, 4, int32(month))
+	Dm_build_650.Dm_build_666(bytes, 8, int32(scale))
 	return bytes, nil
 }
 
@@ -490,6 +490,6 @@ func (ym *DmIntervalYM) checkValid() error {
 	return nil
 }
 
-func (ym *DmIntervalYM) GormDataType() string {
+func (*DmIntervalYM) GormDataType() string {
 	return "INTERVAL YEAR TO MONTH"
 }

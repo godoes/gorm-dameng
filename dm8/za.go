@@ -27,6 +27,7 @@ var (
 	ECGO_UNSUPPORTED_OUTPARAM_TYPE = newDmError(9010, "error.unsupportedOutparamType")
 	ECGO_STORE_IN_NIL_POINTER      = newDmError(9011, "error.storeInNilPointer")
 	ECGO_IS_NULL                   = newDmError(9012, "error.isNull")
+	DSN_INVALID_FORMAT             = newDmError(9001, "error.dsn.invalidFormat")
 )
 
 var (

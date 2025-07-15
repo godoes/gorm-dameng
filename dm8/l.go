@@ -46,29 +46,29 @@ func newClobFromDB(value []byte, conn *DmConnection, column *column, fetchAll bo
 	clob.tabId = column.lobTabId
 	clob.colId = column.lobColId
 
-	clob.inRow = Dm_build_931.Dm_build_1024(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
-	clob.blobId = Dm_build_931.Dm_build_1038(value, NBLOB_HEAD_BLOBID)
+	clob.inRow = Dm_build_650.Dm_build_743(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
+	clob.blobId = Dm_build_650.Dm_build_757(value, NBLOB_HEAD_BLOBID)
 	if !clob.inRow {
-		clob.groupId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_GROUPID)
-		clob.fileId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_FILEID)
-		clob.pageNo = Dm_build_931.Dm_build_1033(value, NBLOB_HEAD_OUTROW_PAGENO)
+		clob.groupId = Dm_build_650.Dm_build_747(value, NBLOB_HEAD_OUTROW_GROUPID)
+		clob.fileId = Dm_build_650.Dm_build_747(value, NBLOB_HEAD_OUTROW_FILEID)
+		clob.pageNo = Dm_build_650.Dm_build_752(value, NBLOB_HEAD_OUTROW_PAGENO)
 	}
 	if conn.NewLobFlag {
-		clob.tabId = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_TABLE_ID)
-		clob.colId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_COL_ID)
-		clob.rowId = Dm_build_931.Dm_build_1038(value, NBLOB_EX_HEAD_ROW_ID)
-		clob.exGroupId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_GRPID)
-		clob.exFileId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_FILEID)
-		clob.exPageNo = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_FPA_PAGENO)
+		clob.tabId = Dm_build_650.Dm_build_752(value, NBLOB_EX_HEAD_TABLE_ID)
+		clob.colId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_COL_ID)
+		clob.rowId = Dm_build_650.Dm_build_757(value, NBLOB_EX_HEAD_ROW_ID)
+		clob.exGroupId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_FPA_GRPID)
+		clob.exFileId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_FPA_FILEID)
+		clob.exPageNo = Dm_build_650.Dm_build_752(value, NBLOB_EX_HEAD_FPA_PAGENO)
 	}
 	clob.resetCurrentInfo()
 
 	clob.serverEncoding = conn.getServerEncoding()
 	if clob.inRow {
 		if conn.NewLobFlag {
-			clob.data = []rune(Dm_build_931.Dm_build_1088(value, NBLOB_EX_HEAD_SIZE, int(clob.getLengthFromHead(value)), clob.serverEncoding, conn))
+			clob.data = []rune(Dm_build_650.Dm_build_807(value, NBLOB_EX_HEAD_SIZE, int(clob.getLengthFromHead(value)), clob.serverEncoding, conn))
 		} else {
-			clob.data = []rune(Dm_build_931.Dm_build_1088(value, NBLOB_INROW_HEAD_SIZE, int(clob.getLengthFromHead(value)), clob.serverEncoding, conn))
+			clob.data = []rune(Dm_build_650.Dm_build_807(value, NBLOB_INROW_HEAD_SIZE, int(clob.getLengthFromHead(value)), clob.serverEncoding, conn))
 		}
 		clob.length = int64(len(clob.data))
 	} else if fetchAll {
@@ -137,7 +137,7 @@ func (clob *DmClob) WriteString(pos int, s string) (n int, err error) {
 		if err = clob.connection.checkClosed(); err != nil {
 			return -1, err
 		}
-		var writeLen, err = clob.connection.Access.dm_build_210(clob, pos, s, clob.serverEncoding)
+		var writeLen, err = clob.connection.Access.dm_build_1553(clob, pos, s, clob.serverEncoding)
 		if err != nil {
 			return -1, err
 		}
@@ -178,7 +178,7 @@ func (clob *DmClob) Truncate(length int64) error {
 		if err = clob.connection.checkClosed(); err != nil {
 			return err
 		}
-		clob.length, err = clob.connection.Access.dm_build_240(&clob.lob, int(length))
+		clob.length, err = clob.connection.Access.dm_build_1583(&clob.lob, int(length))
 		if err != nil {
 			return err
 		}
@@ -190,21 +190,21 @@ func (clob *DmClob) Truncate(length int64) error {
 	return nil
 }
 
-func (clob *DmClob) Scan(src interface{}) error {
-	if clob == nil {
+func (dest *DmClob) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*clob = *new(DmClob)
+		*dest = *new(DmClob)
 
-		(*clob).Valid = false
+		(*dest).Valid = false
 		return nil
 	case string:
-		*clob = *NewClob(src)
+		*dest = *NewClob(src)
 		return nil
 	case *DmClob:
-		*clob = *src
+		*dest = *src
 		return nil
 	default:
 		return UNSUPPORTED_SCAN.throw()
@@ -248,7 +248,7 @@ func (clob *DmClob) getSubString(pos int64, len int32) (string, error) {
 		return string(clob.data[pos : pos+int64(len)]), nil
 	} else {
 
-		return clob.connection.Access.dm_build_198(clob, int32(pos), len)
+		return clob.connection.Access.dm_build_1541(clob, int32(pos), len)
 	}
 }
 
@@ -272,6 +272,6 @@ func (clob *DmClob) setLocalData(pos int, str string) {
 	clob.length = int64(len(clob.data))
 }
 
-func (clob *DmClob) GormDataType() string {
+func (d *DmClob) GormDataType() string {
 	return "CLOB"
 }

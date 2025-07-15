@@ -113,6 +113,7 @@ const (
 	DatabaseProductNameKey   = "databaseProductName"
 	OsAuthTypeKey            = "osAuthType"
 	SchemaKey                = "schema"
+	CatalogKey               = "catalog"
 
 	DO_SWITCH_OFF             int32 = 0
 	DO_SWITCH_WHEN_CONN_ERROR int32 = 1
@@ -165,8 +166,8 @@ const (
 
 	COLUMN_NAME_LOWER_CASE = 2
 
-	compressDef   = Dm_build_372
-	compressIDDef = Dm_build_373
+	compressDef   = Dm_build_91
+	compressIDDef = Dm_build_92
 
 	charCodeDef = ""
 
@@ -220,7 +221,7 @@ const (
 
 	sessionTimeoutDef = 0
 
-	osAuthTypeDef = Dm_build_355
+	osAuthTypeDef = Dm_build_74
 
 	continueBatchOnErrorDef = false
 
@@ -230,7 +231,7 @@ const (
 
 	maxRowsDef = 0
 
-	rowPrefetchDef = Dm_build_356
+	rowPrefetchDef = Dm_build_75
 
 	bufPrefetchDef = 0
 
@@ -400,6 +401,8 @@ type DmConnector struct {
 
 	schema string
 
+	catalog string
+
 	logLevel int
 
 	logDir string
@@ -517,13 +520,13 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.rwStandby = props.GetBool(RwStandbyKey, c.rwStandby)
 
 	if b := props.GetBool(IsCompressKey, false); b {
-		c.compress = Dm_build_371
+		c.compress = Dm_build_90
 	}
 
 	c.compress = props.GetInt(CompressKey, c.compress, 0, 2)
 	c.compressID = int8(props.GetInt(CompressIdKey, int(c.compressID), 0, 1))
 	c.enRsCache = props.GetBool(EnRsCacheKey, c.enRsCache)
-	c.localTimezone = int16(props.GetInt(TimeZoneKey, int(c.localTimezone), -720, 720))
+	c.localTimezone = int16(props.GetInt(TimeZoneKey, int(c.localTimezone), -779, 840))
 	c.rsCacheSize = props.GetInt(RsCacheSizeKey, c.rsCacheSize, 0, int(INT32_MAX))
 	c.rsRefreshFreq = props.GetInt(RsRefreshFreqKey, c.rsRefreshFreq, 0, int(INT32_MAX))
 	c.loginMode = int32(props.GetInt(LoginModeKey, int(c.loginMode), 0, 4))
@@ -571,7 +574,7 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.autoCommit = props.GetBool(AutoCommitKey, c.autoCommit)
 	c.maxRows = props.GetInt(MaxRowsKey, c.maxRows, 0, int(INT32_MAX))
 	c.rowPrefetch = props.GetInt(RowPrefetchKey, c.rowPrefetch, 0, int(INT32_MAX))
-	c.bufPrefetch = props.GetInt(BufPrefetchKey, c.bufPrefetch, int(Dm_build_357), int(Dm_build_358))
+	c.bufPrefetch = props.GetInt(BufPrefetchKey, c.bufPrefetch, int(Dm_build_76), int(Dm_build_77))
 	c.lobMode = props.GetInt(LobModeKey, c.lobMode, 1, 2)
 	c.stmtPoolMaxSize = props.GetInt(StmtPoolSizeKey, c.stmtPoolMaxSize, 0, int(INT32_MAX))
 	c.ignoreCase = props.GetBool(IgnoreCaseKey, c.ignoreCase)
@@ -608,6 +611,7 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	}
 
 	c.schema = props.GetTrimString(SchemaKey, c.schema)
+	c.catalog = props.GetTrimString(CatalogKey, c.catalog)
 
 	c.logLevel = ParseLogLevel(props)
 	LogLevel = c.logLevel
@@ -640,26 +644,26 @@ func (c *DmConnector) parseOsAuthType(props *Properties) error {
 	value := props.GetString(OsAuthTypeKey, "")
 	if value != "" && !util.StringUtil.IsDigit(value) {
 		if util.StringUtil.EqualsIgnoreCase(value, "ON") {
-			c.osAuthType = Dm_build_355
+			c.osAuthType = Dm_build_74
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSDBA") {
-			c.osAuthType = Dm_build_351
+			c.osAuthType = Dm_build_70
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSAUDITOR") {
-			c.osAuthType = Dm_build_353
+			c.osAuthType = Dm_build_72
 		} else if util.StringUtil.EqualsIgnoreCase(value, "SYSSSO") {
-			c.osAuthType = Dm_build_352
+			c.osAuthType = Dm_build_71
 		} else if util.StringUtil.EqualsIgnoreCase(value, "AUTO") {
-			c.osAuthType = Dm_build_354
+			c.osAuthType = Dm_build_73
 		} else if util.StringUtil.EqualsIgnoreCase(value, "OFF") {
-			c.osAuthType = Dm_build_350
+			c.osAuthType = Dm_build_69
 		}
 	} else {
 		c.osAuthType = byte(props.GetInt(OsAuthTypeKey, int(c.osAuthType), 0, 4))
 	}
-	if c.user == "" && c.osAuthType == Dm_build_350 {
+	if c.user == "" && c.osAuthType == Dm_build_69 {
 		c.user = "SYSDBA"
-	} else if c.osAuthType != Dm_build_350 && c.user != "" {
+	} else if c.osAuthType != Dm_build_69 && c.user != "" {
 		return ECGO_OSAUTH_ERROR.throw()
-	} else if c.osAuthType != Dm_build_350 {
+	} else if c.osAuthType != Dm_build_69 {
 		c.user = os.Getenv("user")
 		c.password = ""
 	}
@@ -709,25 +713,41 @@ func (c *DmConnector) parseCluster(props *Properties) {
 
 func (c *DmConnector) parseDSN(dsn string) (*Properties, string, error) {
 	var dsnProps = NewProperties()
-	urlParsed, err := url.Parse(dsn)
-	if err != nil {
-		return nil, "", err
-	}
-	if urlParsed.Scheme != "dm" {
+
+	if strings.Index(dsn, "dm://") != 0 {
 		return nil, "", DSN_INVALID_SCHEMA
 	}
+	dsn = dsn[5:]
 
-	if urlParsed.User != nil {
-		c.user = urlParsed.User.Username()
-		c.password, _ = urlParsed.User.Password()
+	urlString := dsn
+	queryIndex := strings.LastIndex(dsn, "?")
+	if queryIndex > 0 {
+		urlString = dsn[:queryIndex]
+		var queryString = dsn[queryIndex+1:]
+
+		for _, kvString := range strings.Split(queryString, "&") {
+			kv := strings.SplitN(kvString, "=", 2)
+			if kv != nil && len(kv) > 1 {
+				dsnProps.Set(kv[0], kv[1])
+			}
+		}
 	}
 
-	q := urlParsed.Query()
-	for k := range q {
-		dsnProps.Set(k, q.Get(k))
+	hostString := urlString
+	atIndex := strings.LastIndex(urlString, "@")
+	if atIndex == -1 {
+		return nil, "", DSN_INVALID_FORMAT
+	} else {
+		var userString = urlString[:atIndex]
+		hostString = urlString[atIndex+1:]
+		kv := strings.SplitN(userString, ":", 2)
+		if kv != nil && len(kv) > 1 {
+			c.user = kv[0]
+			c.password = kv[1]
+		}
 	}
+	return dsnProps, hostString, nil
 
-	return dsnProps, urlParsed.Host, nil
 }
 
 func (c *DmConnector) BuildDSN() string {
@@ -890,7 +910,7 @@ func (c *DmConnector) connectSingle(ctx context.Context) (*DmConnection, error) 
 	dc.objId = -1
 	dc.init()
 
-	dc.Access, err = dm_build_14(ctx, dc)
+	dc.Access, err = dm_build_1357(ctx, dc)
 	if err != nil {
 		return nil, err
 	}
@@ -901,7 +921,7 @@ func (c *DmConnector) connectSingle(ctx context.Context) (*DmConnection, error) 
 	}
 	defer dc.finish()
 
-	if err = dc.Access.dm_build_59(); err != nil {
+	if err = dc.Access.dm_build_1402(); err != nil {
 
 		if !dc.closed.IsSet() {
 			close(dc.closech)

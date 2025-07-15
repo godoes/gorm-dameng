@@ -47,20 +47,20 @@ func newBlobFromDB(value []byte, conn *DmConnection, column *column, fetchAll bo
 	blob.tabId = column.lobTabId
 	blob.colId = column.lobColId
 
-	blob.inRow = Dm_build_931.Dm_build_1024(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
-	blob.blobId = Dm_build_931.Dm_build_1038(value, NBLOB_HEAD_BLOBID)
+	blob.inRow = Dm_build_650.Dm_build_743(value, NBLOB_HEAD_IN_ROW_FLAG) == LOB_IN_ROW
+	blob.blobId = Dm_build_650.Dm_build_757(value, NBLOB_HEAD_BLOBID)
 	if !blob.inRow {
-		blob.groupId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_GROUPID)
-		blob.fileId = Dm_build_931.Dm_build_1028(value, NBLOB_HEAD_OUTROW_FILEID)
-		blob.pageNo = Dm_build_931.Dm_build_1033(value, NBLOB_HEAD_OUTROW_PAGENO)
+		blob.groupId = Dm_build_650.Dm_build_747(value, NBLOB_HEAD_OUTROW_GROUPID)
+		blob.fileId = Dm_build_650.Dm_build_747(value, NBLOB_HEAD_OUTROW_FILEID)
+		blob.pageNo = Dm_build_650.Dm_build_752(value, NBLOB_HEAD_OUTROW_PAGENO)
 	}
 	if conn.NewLobFlag {
-		blob.tabId = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_TABLE_ID)
-		blob.colId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_COL_ID)
-		blob.rowId = Dm_build_931.Dm_build_1038(value, NBLOB_EX_HEAD_ROW_ID)
-		blob.exGroupId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_GRPID)
-		blob.exFileId = Dm_build_931.Dm_build_1028(value, NBLOB_EX_HEAD_FPA_FILEID)
-		blob.exPageNo = Dm_build_931.Dm_build_1033(value, NBLOB_EX_HEAD_FPA_PAGENO)
+		blob.tabId = Dm_build_650.Dm_build_752(value, NBLOB_EX_HEAD_TABLE_ID)
+		blob.colId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_COL_ID)
+		blob.rowId = Dm_build_650.Dm_build_757(value, NBLOB_EX_HEAD_ROW_ID)
+		blob.exGroupId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_FPA_GRPID)
+		blob.exFileId = Dm_build_650.Dm_build_747(value, NBLOB_EX_HEAD_FPA_FILEID)
+		blob.exPageNo = Dm_build_650.Dm_build_752(value, NBLOB_EX_HEAD_FPA_PAGENO)
 	}
 	blob.resetCurrentInfo()
 
@@ -68,9 +68,9 @@ func newBlobFromDB(value []byte, conn *DmConnection, column *column, fetchAll bo
 	if blob.inRow {
 		blob.data = make([]byte, blob.length)
 		if conn.NewLobFlag {
-			Dm_build_931.Dm_build_987(blob.data, 0, value, NBLOB_EX_HEAD_SIZE, len(blob.data))
+			Dm_build_650.Dm_build_706(blob.data, 0, value, NBLOB_EX_HEAD_SIZE, len(blob.data))
 		} else {
-			Dm_build_931.Dm_build_987(blob.data, 0, value, NBLOB_INROW_HEAD_SIZE, len(blob.data))
+			Dm_build_650.Dm_build_706(blob.data, 0, value, NBLOB_INROW_HEAD_SIZE, len(blob.data))
 		}
 	} else if fetchAll {
 		blob.loadAllData()
@@ -154,7 +154,7 @@ func (blob *DmBlob) Write(pos int, src []byte) (n int, err error) {
 		if err = blob.connection.checkClosed(); err != nil {
 			return -1, err
 		}
-		var writeLen, err = blob.connection.Access.dm_build_226(blob, pos, src)
+		var writeLen, err = blob.connection.Access.dm_build_1569(blob, pos, src)
 		if err != nil {
 			return -1, err
 		}
@@ -187,24 +187,27 @@ func (blob *DmBlob) Truncate(length int64) error {
 		return ECGO_RESULTSET_IS_READ_ONLY.throw()
 	}
 	if blob.local || blob.fetchAll {
-		if length >= int64(len(blob.data)) {
+		if length > int64(len(blob.data)) {
+			return ECGO_INVALID_LENGTH_OR_OFFSET.throw()
+		}
+		if length == int64(len(blob.data)) {
 			return nil
 		}
 		tmp := make([]byte, length)
-		Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, len(tmp))
+		Dm_build_650.Dm_build_706(tmp, 0, blob.data, 0, len(tmp))
 		blob.data = tmp
 		blob.length = int64(len(tmp))
 	} else {
 		if err = blob.connection.checkClosed(); err != nil {
 			return err
 		}
-		blob.length, err = blob.connection.Access.dm_build_240(&blob.lob, int(length))
+		blob.length, err = blob.connection.Access.dm_build_1583(&blob.lob, int(length))
 		if err != nil {
 			return err
 		}
 		if blob.groupId == -1 {
 			tmp := make([]byte, blob.length)
-			Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, int(blob.length))
+			Dm_build_650.Dm_build_706(tmp, 0, blob.data, 0, int(blob.length))
 			blob.data = tmp
 		}
 	}
@@ -212,21 +215,21 @@ func (blob *DmBlob) Truncate(length int64) error {
 	return nil
 }
 
-func (blob *DmBlob) Scan(src interface{}) error {
-	if blob == nil {
+func (dest *DmBlob) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*blob = *new(DmBlob)
+		*dest = *new(DmBlob)
 
-		(*blob).Valid = false
+		(*dest).Valid = false
 		return nil
 	case []byte:
-		*blob = *NewBlob(src)
+		*dest = *NewBlob(src)
 		return nil
 	case *DmBlob:
-		*blob = *src
+		*dest = *src
 		return nil
 	default:
 		return UNSUPPORTED_SCAN.throw()
@@ -264,7 +267,7 @@ func (blob *DmBlob) getBytes(pos int64, length int32) ([]byte, error) {
 		return blob.data[pos : pos+int64(length)], nil
 	} else {
 
-		return blob.connection.Access.dm_build_187(blob, int32(pos), length)
+		return blob.connection.Access.dm_build_1530(blob, int32(pos), length)
 	}
 }
 
@@ -281,15 +284,15 @@ func (blob *DmBlob) loadAllData() {
 func (blob *DmBlob) setLocalData(pos int, p []byte) {
 	if pos+len(p) >= int(blob.length) {
 		var tmp = make([]byte, pos+len(p))
-		Dm_build_931.Dm_build_987(tmp, 0, blob.data, 0, pos)
-		Dm_build_931.Dm_build_987(tmp, pos, p, 0, len(p))
+		Dm_build_650.Dm_build_706(tmp, 0, blob.data, 0, pos)
+		Dm_build_650.Dm_build_706(tmp, pos, p, 0, len(p))
 		blob.data = tmp
 	} else {
-		Dm_build_931.Dm_build_987(blob.data, pos, p, 0, len(p))
+		Dm_build_650.Dm_build_706(blob.data, pos, p, 0, len(p))
 	}
 	blob.length = int64(len(blob.data))
 }
 
-func (blob *DmBlob) GormDataType() string {
+func (d *DmBlob) GormDataType() string {
 	return "BLOB"
 }

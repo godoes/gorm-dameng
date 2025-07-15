@@ -195,17 +195,7 @@ func (m Migrator) DropColumn(dst interface{}, field string) error {
 }
 
 func (m Migrator) AlterColumn(value interface{}, field string) error {
-	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
-		if field := stmt.Schema.LookUpField(field); field != nil {
-			return m.DB.Exec(
-				"ALTER TABLE ? MODIFY ? ?",
-				clause.Table{Name: stmt.Table},
-				clause.Column{Name: field.DBName},
-				m.FullDataTypeOf(field),
-			).Error
-		}
-		return fmt.Errorf("failed to look up field with name: %s", field)
-	})
+	return m.alterColumn(value, field, false)
 }
 
 // containsUnique: 原本是否就有UNIQUE字段
@@ -218,12 +208,19 @@ func (m Migrator) alterColumn(value interface{}, field string, containsUnique bo
 			if containsUnique && field.Unique {
 				typeof.SQL = strings.Replace(typeof.SQL, " UNIQUE", "", 1)
 			}
-			return m.DB.Exec(
+			if err := m.DB.Exec(
 				"ALTER TABLE ? MODIFY ? ?",
 				clause.Table{Name: stmt.Table},
 				clause.Column{Name: field.DBName},
 				typeof,
-			).Error
+			).Error; err != nil {
+				return err
+			}
+			// 修改列注释
+			if err := m.alterColumnComment(stmt, field); err != nil {
+				return err
+			}
+			return nil
 		}
 		return fmt.Errorf("failed to look up field with name: %s", field)
 	})

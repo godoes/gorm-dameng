@@ -183,7 +183,7 @@ func next(lvalList []*parser.LVal, start int) *parser.LVal {
 	return lval
 }
 
-func (dc *DmConnection) execOpt(sql string, optParamList []OptParameter, serverEncoding string) (string, []OptParameter, error) {
+func (dc *DmConnection) execOpt(sql string, optParamList []OptParameter, serverEncoding string, backSlashFlag bool) (string, []OptParameter, error) {
 	nsql := bytes.NewBufferString("")
 
 	lvalList, err := dc.lex(sql)
@@ -252,7 +252,11 @@ func (dc *DmConnection) execOpt(sql string, optParamList []OptParameter, serverE
 					nsql.WriteString("'" + util.StringUtil.ProcessSingleQuoteOfName(lval.Value) + "'")
 				} else {
 					nsql.WriteString("?")
-					optParamList = append(optParamList, newOptParameter(Dm_build_931.Dm_build_1147(lval.Value, serverEncoding, dc), VARCHAR, VARCHAR_PREC))
+
+					if backSlashFlag {
+						lval.Value = util.StringUtil.Translate(lval.Value)
+					}
+					optParamList = append(optParamList, newOptParameter(Dm_build_650.Dm_build_866(lval.Value, serverEncoding, dc), VARCHAR, VARCHAR_PREC))
 				}
 			}
 		case parser.HEX_INT:

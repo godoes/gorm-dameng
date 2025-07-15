@@ -13,13 +13,13 @@ import (
 	"unicode"
 )
 
-type stringUtil struct{}
+type stringutil struct{}
 
-var StringUtil = &stringUtil{}
+var StringUtil = &stringutil{}
 
 /*----------------------------------------------------*/
 
-func (StringUtil *stringUtil) LineSeparator() string {
+func (StringUtil *stringutil) LineSeparator() string {
 	var lineSeparator string
 	if strings.Contains(runtime.GOOS, "windows") {
 		lineSeparator = "\r\n"
@@ -32,27 +32,27 @@ func (StringUtil *stringUtil) LineSeparator() string {
 	return lineSeparator
 }
 
-func (StringUtil *stringUtil) Equals(str1 string, str2 string) bool {
+func (StringUtil *stringutil) Equals(str1 string, str2 string) bool {
 	return str1 == str2
 }
 
-func (StringUtil *stringUtil) EqualsIgnoreCase(str1 string, str2 string) bool {
+func (StringUtil *stringutil) EqualsIgnoreCase(str1 string, str2 string) bool {
 	return strings.ToUpper(str1) == strings.ToUpper(str2)
 }
 
-func (StringUtil *stringUtil) StartsWith(s string, subStr string) bool {
+func (StringUtil *stringutil) StartsWith(s string, subStr string) bool {
 	return strings.Index(s, subStr) == 0
 }
 
-func (StringUtil *stringUtil) StartWithIgnoreCase(s string, subStr string) bool {
+func (StringUtil *stringutil) StartWithIgnoreCase(s string, subStr string) bool {
 	return strings.HasPrefix(strings.ToLower(s), strings.ToLower(subStr))
 }
 
-func (StringUtil *stringUtil) EndsWith(s string, subStr string) bool {
+func (StringUtil *stringutil) EndsWith(s string, subStr string) bool {
 	return strings.LastIndex(s, subStr) == len(s)-1
 }
 
-func (StringUtil *stringUtil) IsDigit(str string) bool {
+func (StringUtil *stringutil) IsDigit(str string) bool {
 	if str == "" {
 		return false
 	}
@@ -67,7 +67,7 @@ func (StringUtil *stringUtil) IsDigit(str string) bool {
 	return true
 }
 
-func (StringUtil *stringUtil) FormatDir(dir string) string {
+func (StringUtil *stringutil) FormatDir(dir string) string {
 	dir = strings.TrimSpace(dir)
 	if dir != "" {
 		if !StringUtil.EndsWith(dir, PathSeparator) {
@@ -77,7 +77,7 @@ func (StringUtil *stringUtil) FormatDir(dir string) string {
 	return dir
 }
 
-func (StringUtil *stringUtil) HexStringToBytes(s string) []byte {
+func (StringUtil *stringutil) HexStringToBytes(s string) []byte {
 	str := s
 
 	bs := make([]byte, 0)
@@ -140,7 +140,7 @@ func convertHex(chr byte) byte {
 	}
 }
 
-func (StringUtil *stringUtil) BytesToHexString(bs []byte, pre bool) string {
+func (StringUtil *stringutil) BytesToHexString(bs []byte, pre bool) string {
 	if bs == nil {
 		return ""
 	}
@@ -160,15 +160,15 @@ func (StringUtil *stringUtil) BytesToHexString(bs []byte, pre bool) string {
 	return ret.String()
 }
 
-func (StringUtil *stringUtil) ProcessSingleQuoteOfName(name string) string {
+func (StringUtil *stringutil) ProcessSingleQuoteOfName(name string) string {
 	return StringUtil.processQuoteOfName(name, "'")
 }
 
-func (StringUtil *stringUtil) ProcessDoubleQuoteOfName(name string) string {
+func (StringUtil *stringutil) ProcessDoubleQuoteOfName(name string) string {
 	return StringUtil.processQuoteOfName(name, "\"")
 }
 
-func (StringUtil *stringUtil) processQuoteOfName(name string, quote string) string {
+func (StringUtil *stringutil) processQuoteOfName(name string, quote string) string {
 	if quote == "" || name == "" {
 		return name
 	}
@@ -188,11 +188,11 @@ func (StringUtil *stringUtil) processQuoteOfName(name string, quote string) stri
 	return result.String()
 }
 
-func (StringUtil *stringUtil) FormatTime() string {
+func (StringUtil *stringutil) FormatTime() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
-func (StringUtil *stringUtil) SubstringBetween(str string, open string, close string) string {
+func (StringUtil *stringutil) SubstringBetween(str string, open string, close string) string {
 	if str == "" {
 		return ""
 	}
@@ -216,4 +216,51 @@ func (StringUtil *stringUtil) SubstringBetween(str string, open string, close st
 	} else {
 		return str[iopen:iclose]
 	}
+}
+
+// Translate bug656976 在常量参数化时，将\+任意字符的两个字符解析成一个转义后字符，如：
+// 字符串参数'a\nb'解析成字符串参数'a换行b'
+func (StringUtil *stringutil) Translate(s string) string {
+	if !strings.ContainsRune(s, '\\') {
+		return s
+	}
+	reader := strings.NewReader(s)
+	trans := bytes.NewBufferString("")
+
+	for {
+		curRune, _, err := reader.ReadRune()
+		if err != nil {
+			break
+		}
+		if curRune != '\\' {
+			trans.WriteRune(curRune)
+		} else {
+			//转义规则参考mysql,'\'作为转义符必须消除,不管是否作为有真正含义的特殊字符,如\x也需要变化为x
+			nextRune, _, err := reader.ReadRune()
+			if err != nil {
+				break
+			}
+			switch nextRune {
+			case 'b':
+				trans.WriteRune('\b')
+				break
+			case 'f':
+				trans.WriteRune('\f')
+				break
+			case 'n':
+				trans.WriteRune('\n')
+				break
+			case 'r':
+				trans.WriteRune('\r')
+				break
+			case 't':
+				trans.WriteRune('\t')
+				break
+			default:
+				trans.WriteRune(nextRune)
+				break
+			}
+		}
+	}
+	return trans.String()
 }

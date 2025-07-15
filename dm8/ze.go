@@ -626,6 +626,8 @@ func (logger Logger) DebugWithErr(msg string, err error) {
 		var e *DmError
 		if errors.As(err, &e) {
 			logger.println(logger.formatHead("DEBUG") + msg + util.LINE_SEPARATOR + e.Stack())
+		} else {
+			logger.println(logger.formatHead("DEBUG") + msg + util.LINE_SEPARATOR + err.Error())
 		}
 	}
 }

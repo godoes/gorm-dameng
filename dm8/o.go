@@ -41,16 +41,16 @@ func NewDecimalFromInt64(x int64) (*DmDecimal, error) {
 	return NewDecimalFromBigInt(big.NewInt(x))
 }
 
-func (dest DmDecimal) ToInt64() int64 {
-	return dest.ToBigInt().Int64()
+func (d DmDecimal) ToInt64() int64 {
+	return d.ToBigInt().Int64()
 }
 
 func NewDecimalFromFloat64(x float64) (*DmDecimal, error) {
 	return NewDecimalFromBigFloat(big.NewFloat(x))
 }
 
-func (dest DmDecimal) ToFloat64() float64 {
-	f, _ := dest.ToBigFloat().Float64()
+func (d DmDecimal) ToFloat64() float64 {
+	f, _ := d.ToBigFloat().Float64()
 	return f
 }
 
@@ -58,26 +58,26 @@ func NewDecimalFromBigInt(bigInt *big.Int) (*DmDecimal, error) {
 	return newDecimal(bigInt, len(bigInt.String()), 0)
 }
 
-func (dest DmDecimal) ToBigInt() *big.Int {
-	if dest.isZero() {
+func (d DmDecimal) ToBigInt() *big.Int {
+	if d.isZero() {
 		return big.NewInt(0)
 	}
-	var digits = dest.digits
-	if dest.sign < 0 {
+	var digits = d.digits
+	if d.sign < 0 {
 		digits = "-" + digits
 	}
 	i1, ok := new(big.Int).SetString(digits, 10)
 	if !ok {
 		return nil
 	}
-	if dest.weight > 0 {
-		i2, ok := new(big.Int).SetString("1"+strings.Repeat("0", dest.weight), 10)
+	if d.weight > 0 {
+		i2, ok := new(big.Int).SetString("1"+strings.Repeat("0", d.weight), 10)
 		if !ok {
 			return nil
 		}
 		i1.Mul(i1, i2)
-	} else if dest.weight < 0 {
-		i2, ok := new(big.Int).SetString("1"+strings.Repeat("0", -dest.weight), 10)
+	} else if d.weight < 0 {
+		i2, ok := new(big.Int).SetString("1"+strings.Repeat("0", -d.weight), 10)
 		if !ok {
 			return nil
 		}
@@ -90,26 +90,26 @@ func NewDecimalFromBigFloat(bigFloat *big.Float) (*DmDecimal, error) {
 	return newDecimal(bigFloat, int(bigFloat.Prec()), int(bigFloat.Prec()))
 }
 
-func (dest DmDecimal) ToBigFloat() *big.Float {
-	if dest.isZero() {
+func (d DmDecimal) ToBigFloat() *big.Float {
+	if d.isZero() {
 		return big.NewFloat(0.0)
 	}
-	var digits = dest.digits
-	if dest.sign < 0 {
+	var digits = d.digits
+	if d.sign < 0 {
 		digits = "-" + digits
 	}
 	f1, ok := new(big.Float).SetString(digits)
 	if !ok {
 		return nil
 	}
-	if dest.weight > 0 {
-		f2, ok := new(big.Float).SetString("1" + strings.Repeat("0", dest.weight))
+	if d.weight > 0 {
+		f2, ok := new(big.Float).SetString("1" + strings.Repeat("0", d.weight))
 		if !ok {
 			return nil
 		}
 		f1.Mul(f1, f2)
-	} else if dest.weight < 0 {
-		f2, ok := new(big.Float).SetString("1" + strings.Repeat("0", -dest.weight))
+	} else if d.weight < 0 {
+		f2, ok := new(big.Float).SetString("1" + strings.Repeat("0", -d.weight))
 		if !ok {
 			return nil
 		}
@@ -126,19 +126,19 @@ func NewDecimalFromString(s string) (*DmDecimal, error) {
 	return NewDecimalFromBigFloat(num)
 }
 
-func (dest DmDecimal) String() string {
+func (d DmDecimal) String() string {
 
-	if dest.isZero() {
+	if d.isZero() {
 		return "0"
 	}
-	digitsStr := dest.digits
-	if dest.weight > 0 {
-		digitsStr = digitsStr + strings.Repeat("0", dest.weight)
-	} else if dest.weight < 0 {
-		if len(digitsStr) < -dest.weight {
-			digitsStr = strings.Repeat("0", -dest.weight-len(digitsStr)+1) + digitsStr
+	digitsStr := d.digits
+	if d.weight > 0 {
+		digitsStr = digitsStr + strings.Repeat("0", d.weight)
+	} else if d.weight < 0 {
+		if len(digitsStr) < -d.weight {
+			digitsStr = strings.Repeat("0", -d.weight-len(digitsStr)+1) + digitsStr
 		}
-		indexOfDot := len(digitsStr) + dest.weight
+		indexOfDot := len(digitsStr) + d.weight
 		digitsStr = digitsStr[:indexOfDot] + "." + digitsStr[indexOfDot:]
 	}
 
@@ -150,15 +150,15 @@ func (dest DmDecimal) String() string {
 		digitsStr = digitsStr[0 : len(digitsStr)-1]
 	}
 
-	if dest.sign < 0 {
+	if d.sign < 0 {
 		digitsStr = "-" + digitsStr
 	}
 
 	return digitsStr
 }
 
-func (dest DmDecimal) Sign() int {
-	return dest.sign
+func (d DmDecimal) Sign() int {
+	return d.sign
 }
 
 func (dest *DmDecimal) Scan(src interface{}) error {
@@ -207,11 +207,11 @@ func (dest *DmDecimal) Scan(src interface{}) error {
 	}
 }
 
-func (dest DmDecimal) Value() (driver.Value, error) {
-	if !dest.Valid {
+func (d DmDecimal) Value() (driver.Value, error) {
+	if !d.Valid {
 		return nil, nil
 	}
-	return dest, nil
+	return d, nil
 }
 
 func newDecimal(dec interface{}, prec int, scale int) (*DmDecimal, error) {
@@ -315,27 +315,27 @@ func newDecimal(dec interface{}, prec int, scale int) (*DmDecimal, error) {
 	return d, nil
 }
 
-func (dest DmDecimal) encodeDecimal() ([]byte, error) {
-	if dest.isZero() {
+func (d DmDecimal) encodeDecimal() ([]byte, error) {
+	if d.isZero() {
 		return []byte{byte(FLAG_ZERO)}, nil
 	}
-	exp := (dest.weight+len(dest.digits))/2 - 1
+	exp := (d.weight+len(d.digits))/2 - 1
 	if exp > EXP_MAX || exp < EXP_MIN {
 		return nil, ECGO_DATA_TOO_LONG.throw()
 	}
-	validLen := len(dest.digits)/2 + 1
+	validLen := len(d.digits)/2 + 1
 
-	if dest.sign < 0 && validLen >= XDEC_SIZE {
+	if d.sign < 0 && validLen >= XDEC_SIZE {
 		validLen = XDEC_SIZE - 1
 	} else if validLen > XDEC_SIZE {
 		validLen = XDEC_SIZE
 	}
 	retLen := validLen
-	if dest.sign < 0 {
+	if d.sign < 0 {
 		retLen = validLen + 1
 	}
 	retBytes := make([]byte, retLen)
-	if dest.sign > 0 {
+	if d.sign > 0 {
 		retBytes[0] = byte(exp + FLAG_POSITIVE)
 	} else {
 		retBytes[0] = byte(FLAG_NEGTIVE - exp)
@@ -343,26 +343,26 @@ func (dest DmDecimal) encodeDecimal() ([]byte, error) {
 
 	ibytes := 1
 	for ichar := 0; ibytes < validLen; {
-		digit1, err := strconv.Atoi(string(dest.digits[ichar]))
+		digit1, err := strconv.Atoi(string(d.digits[ichar]))
 		if err != nil {
 			return nil, err
 		}
 		ichar++
-		digit2, err := strconv.Atoi(string(dest.digits[ichar]))
+		digit2, err := strconv.Atoi(string(d.digits[ichar]))
 		ichar++
 		if err != nil {
 			return nil, err
 		}
 
 		digit := digit1*10 + digit2
-		if dest.sign > 0 {
+		if d.sign > 0 {
 			retBytes[ibytes] = byte(digit + NUM_POSITIVE)
 		} else {
 			retBytes[ibytes] = byte(NUM_NEGTIVE - digit)
 		}
 		ibytes++
 	}
-	if dest.sign < 0 && ibytes < retLen {
+	if d.sign < 0 && ibytes < retLen {
 		retBytes[ibytes] = 0x66
 		ibytes++
 	}
@@ -392,7 +392,7 @@ func decodeDecimal(values []byte, prec int, scale int) (*DmDecimal, error) {
 		decimal.sign = -1
 	}
 
-	var flag = int(Dm_build_931.Dm_build_1051(values, 0))
+	var flag = int(Dm_build_650.Dm_build_770(values, 0))
 	var exp int
 	if decimal.sign > 0 {
 		exp = flag - FLAG_POSITIVE
@@ -421,8 +421,8 @@ func decodeDecimal(values []byte, prec int, scale int) (*DmDecimal, error) {
 	return decimal, nil
 }
 
-func (dest DmDecimal) isZero() bool {
-	return dest.sign == 0
+func (d DmDecimal) isZero() bool {
+	return d.sign == 0
 }
 
 func checkPrec(len int, prec int) error {
@@ -436,13 +436,13 @@ func isOdd(val int) bool {
 	return val%2 != 0
 }
 
-func (dest *DmDecimal) checkValid() error {
-	if !dest.Valid {
+func (d *DmDecimal) checkValid() error {
+	if !d.Valid {
 		return ECGO_IS_NULL.throw()
 	}
 	return nil
 }
 
-func (dest *DmDecimal) GormDataType() string {
+func (d *DmDecimal) GormDataType() string {
 	return "DECIMAL"
 }

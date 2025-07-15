@@ -107,7 +107,8 @@ func NewDmTimestampFromTime(time time.Time) *DmTimestamp {
 }
 
 func (dmTimestamp *DmTimestamp) ToTime() time.Time {
-	return toTimeFromDT(dmTimestamp.dt, 0)
+	_, tzs := time.Now().Zone()
+	return toTimeFromDT(dmTimestamp.dt, tzs/60)
 }
 
 // GetDt 获取年月日时分秒毫秒时区
@@ -132,29 +133,29 @@ func (dmTimestamp *DmTimestamp) String() string {
 	return dtToString(dmTimestamp.dt, dmTimestamp.dtype, dmTimestamp.scale)
 }
 
-func (dmTimestamp *DmTimestamp) Scan(src interface{}) error {
-	if dmTimestamp == nil {
+func (dest *DmTimestamp) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*dmTimestamp = *new(DmTimestamp)
+		*dest = *new(DmTimestamp)
 		// 将Valid标志置false表示数据库中该列为NULL
-		(*dmTimestamp).Valid = false
+		(*dest).Valid = false
 		return nil
 	case *DmTimestamp:
-		*dmTimestamp = *src
+		*dest = *src
 		return nil
 	case time.Time:
 		ret := NewDmTimestampFromTime(src)
-		*dmTimestamp = *ret
+		*dest = *ret
 		return nil
 	case string:
 		ret, err := NewDmTimestampFromString(src)
 		if err != nil {
 			return err
 		}
-		*dmTimestamp = *ret
+		*dest = *ret
 		return nil
 	default:
 		return UNSUPPORTED_SCAN.throw()
@@ -180,7 +181,8 @@ func (dmTimestamp *DmTimestamp) getDt() []int {
 }
 
 func (dmTimestamp *DmTimestamp) getTime() int64 {
-	sec := toTimeFromDT(dmTimestamp.dt, 0).Unix()
+	_, tzs := time.Now().Zone()
+	sec := toTimeFromDT(dmTimestamp.dt, tzs/60).Unix()
 	return sec + int64(dmTimestamp.dt[OFFSET_NANOSECOND])
 }
 
@@ -227,6 +229,6 @@ func (dmTimestamp *DmTimestamp) checkValid() error {
 
 /* for gorm v2 */
 
-func (dmTimestamp *DmTimestamp) GormDataType() string {
+func (*DmTimestamp) GormDataType() string {
 	return "TIMESTAMP"
 }

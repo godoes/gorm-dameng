@@ -853,9 +853,11 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 			}
 			switch action {
 			case 1:
-				lexer.debug("{other}")
+				{
+					lexer.debug("{other}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 44:
 			case 2:
 				{
@@ -877,24 +879,32 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 46:
 			case 4:
-				lexer.debug("{self} | {op_chars}")
+				{
+					lexer.debug("{self} | {op_chars}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 47:
 			case 5:
-				lexer.debug("{identifier}")
+				{
+					lexer.debug("{identifier}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 48:
 			case 6:
-				lexer.debug("{integer}")
+				{
+					lexer.debug("{integer}")
 
-				return newLVal(lexer.yytext(), INT), nil
+					return newLVal(lexer.yytext(), INT), nil
+				}
 			case 49:
 			case 7:
-				lexer.debug("{whitespace} | {comment} | {c_line_comment}")
+				{
+					lexer.debug("{whitespace} | {comment} | {c_line_comment}")
 
-				return newLVal(lexer.yytext(), WHITESPACE_OR_COMMENT), nil
+					return newLVal(lexer.yytext(), WHITESPACE_OR_COMMENT), nil
+				}
 			case 50:
 			case 8:
 				{
@@ -921,10 +931,12 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 53:
 			case 11:
-				lexer.debug("<xq>{xq_stop}")
+				{
+					lexer.debug("<xq>{xq_stop}")
 
-				lexer.yybegin(YYINITIAL)
-				return newLVal(lexer.ltstr, STRING), nil
+					lexer.yybegin(YYINITIAL)
+					return newLVal(lexer.ltstr, STRING), nil
+				}
 			case 54:
 			case 12:
 				{
@@ -935,11 +947,13 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 55:
 			case 13:
-				lexer.debug("<xdq>{xdq_stop}")
+				{
+					lexer.debug("<xdq>{xdq_stop}")
 
-				lexer.yybegin(YYINITIAL)
-				lexer.ltstr += lexer.yytext()
-				return newLVal(lexer.ltstr, NORMAL), nil
+					lexer.yybegin(YYINITIAL)
+					lexer.ltstr += lexer.yytext()
+					return newLVal(lexer.ltstr, NORMAL), nil
+				}
 			case 56:
 			case 14:
 				{
@@ -950,11 +964,13 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 57:
 			case 15:
-				lexer.debug("<xbin>{xbin_stop}")
+				{
+					lexer.debug("<xbin>{xbin_stop}")
 
-				lexer.yybegin(YYINITIAL)
-				lexer.ltstr += lexer.yytext()
-				return newLVal(lexer.ltstr, NORMAL), nil
+					lexer.yybegin(YYINITIAL)
+					lexer.ltstr += lexer.yytext()
+					return newLVal(lexer.ltstr, NORMAL), nil
+				}
 			case 58:
 			case 16:
 				{
@@ -965,11 +981,13 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 59:
 			case 17:
-				lexer.debug("<xhex>{xhex_stop}")
+				{
+					lexer.debug("<xhex>{xhex_stop}")
 
-				lexer.yybegin(YYINITIAL)
-				lexer.ltstr += lexer.yytext()
-				return newLVal(lexer.ltstr, NORMAL), nil
+					lexer.yybegin(YYINITIAL)
+					lexer.ltstr += lexer.yytext()
+					return newLVal(lexer.ltstr, NORMAL), nil
+				}
 			case 60:
 			case 18:
 				{
@@ -992,9 +1010,11 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 63:
 			case 21:
-				lexer.yybegin(YYINITIAL)
+				{
+					lexer.yybegin(YYINITIAL)
 
-				return newLVal(lexer.ltstr, STRING), nil
+					return newLVal(lexer.ltstr, STRING), nil
+				}
 			case 64:
 			case 22:
 				{
@@ -1033,29 +1053,39 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 68:
 			case 26:
-				lexer.debug("{decimal}")
+				{
+					lexer.debug("{decimal}")
 
-				return newLVal(lexer.yytext(), DECIMAL), nil
+					return newLVal(lexer.yytext(), DECIMAL), nil
+				}
 			case 69:
 			case 27:
-				lexer.debug("{real}")
+				{
+					lexer.debug("{real}")
 
-				return newLVal(lexer.yytext(), DOUBLE), nil
+					return newLVal(lexer.yytext(), DOUBLE), nil
+				}
 			case 70:
 			case 28:
-				lexer.debug("{assign}")
+				{
+					lexer.debug("{assign}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 71:
 			case 29:
-				lexer.debug("{selstar}")
+				{
+					lexer.debug("{selstar}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 72:
 			case 30:
-				lexer.debug("{boundary}")
+				{
+					lexer.debug("{boundary}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 73:
 			case 31:
 				{
@@ -1066,11 +1096,13 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 74:
 			case 32:
-				lexer.debug("<xc>{xc_stop}")
+				{
+					lexer.debug("<xc>{xc_stop}")
 
-				lexer.yybegin(YYINITIAL)
-				lexer.ltstr += lexer.yytext()
-				return newLVal(lexer.ltstr, WHITESPACE_OR_COMMENT), nil
+					lexer.yybegin(YYINITIAL)
+					lexer.ltstr += lexer.yytext()
+					return newLVal(lexer.ltstr, WHITESPACE_OR_COMMENT), nil
+				}
 			case 75:
 			case 33:
 				{
@@ -1096,14 +1128,18 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 78:
 			case 36:
-				lexer.debug("{integer_with_boundary}")
+				{
+					lexer.debug("{integer_with_boundary}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 79:
 			case 37:
-				lexer.debug("{hex_integer}")
+				{
+					lexer.debug("{hex_integer}")
 
-				return newLVal(lexer.yytext(), HEX_INT), nil
+					return newLVal(lexer.yytext(), HEX_INT), nil
+				}
 			case 80:
 			case 38:
 				{
@@ -1124,19 +1160,25 @@ func (lexer *Lexer) Yylex() (*LVal, error) {
 				fallthrough
 			case 83:
 			case 41:
-				lexer.debug("{null}")
+				{
+					lexer.debug("{null}")
 
-				return newLVal("null", NULL), nil
+					return newLVal("null", NULL), nil
+				}
 			case 84:
 			case 42:
-				lexer.debug("{is_null}")
+				{
+					lexer.debug("{is_null}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 85:
 			case 43:
-				lexer.debug("{not_null}")
+				{
+					lexer.debug("{not_null}")
 
-				return newLVal(lexer.yytext(), NORMAL), nil
+					return newLVal(lexer.yytext(), NORMAL), nil
+				}
 			case 86:
 			default:
 				lexer.zzScanError(ZZ_NO_MATCH)

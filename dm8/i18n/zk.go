@@ -12,6 +12,10 @@ const Messages_en_US = `{
       "id": "error.dsn.invalidSchema",
       "translation": "DSN must start with dm://"
     },
+	{
+      "id": "error.dsn.invalidFormat",
+      "translation": "DSN is invalid"
+    },
     {
       "id": "error.unsupported.scan",
       "translation": "Unsupported scan type"

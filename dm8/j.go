@@ -237,33 +237,33 @@ func (da *DmArray) GetDoubleArray(index int64, count int) ([]float64, error) {
 	return tmp.([]float64), nil
 }
 
-func (da *DmArray) Scan(src interface{}) error {
-	if da == nil {
+func (dest *DmArray) Scan(src interface{}) error {
+	if dest == nil {
 		return ECGO_STORE_IN_NIL_POINTER.throw()
 	}
 	switch src := src.(type) {
 	case nil:
-		*da = *new(DmArray)
+		*dest = *new(DmArray)
 		// 将Valid标志置false表示数据库中该列为NULL
-		(*da).Valid = false
+		(*dest).Valid = false
 		return nil
 	case *DmArray:
-		*da = *src
+		*dest = *src
 		return nil
 	default:
 		return UNSUPPORTED_SCAN.throw()
 	}
 }
 
-func (da DmArray) Value() (driver.Value, error) {
-	if !da.Valid {
+func (array DmArray) Value() (driver.Value, error) {
+	if !array.Valid {
 		return nil, nil
 	}
-	return da, nil
+	return array, nil
 }
 
-func (da *DmArray) checkValid() error {
-	if !da.Valid {
+func (array *DmArray) checkValid() error {
+	if !array.Valid {
 		return ECGO_IS_NULL.throw()
 	}
 	return nil

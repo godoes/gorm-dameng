@@ -12,6 +12,10 @@ const Messages_zh_CN = `{
       "id": "error.dsn.invalidSchema",
       "translation": "DSN串必须以dm://开头"
     },
+	{
+      "id": "error.dsn.invalidFormat",
+      "translation": "DSN串格式不正确"
+    },
     {
       "id": "error.unsupported.scan",
       "translation": "Scan类型转换出错"

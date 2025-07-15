@@ -2,6 +2,11 @@
 
 *你可以在文件p.go中的发版标记里找到当前驱动的svn号
 
+## svn 31633
+修复了带ipv6地址的服务名无法连接数据库的问题
+dm.DmError输出不再附加堆栈信息，如需要则调用dm.DmError.Stack()方法单独获取
+服务器开启常量参数化优化时，go驱动出现一些报错问题
+
 ## svn 16752
 支持在连接串上直接配置动态服务名，使用示例：
 dm://user:password@GroupName?GroupName=(host1:port1,host2:port2,...)

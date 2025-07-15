@@ -62,24 +62,24 @@ func (dg *dhGroup) GeneratePrivateKey(randReader io.Reader) (key *DhKey, err err
 	return
 }
 
-func (dg *dhGroup) ComputeKey(publicKey *DhKey, privateKey *DhKey) (kye *DhKey, err error) {
+func (dg *dhGroup) ComputeKey(pubkey *DhKey, privkey *DhKey) (kye *DhKey, err error) {
 	if dg.p == nil {
 		err = errors.New("DH: invalid group")
 		return
 	}
-	if publicKey.y == nil {
+	if pubkey.y == nil {
 		err = errors.New("DH: invalid public key")
 		return
 	}
-	if publicKey.y.Sign() <= 0 || publicKey.y.Cmp(dg.p) >= 0 {
+	if pubkey.y.Sign() <= 0 || pubkey.y.Cmp(dg.p) >= 0 {
 		err = errors.New("DH parameter out of bounds")
 		return
 	}
-	if privateKey.x == nil {
+	if privkey.x == nil {
 		err = errors.New("DH: invalid private key")
 		return
 	}
-	k := new(big.Int).Exp(publicKey.y, privateKey.x, dg.p)
+	k := new(big.Int).Exp(pubkey.y, privkey.x, dg.p)
 	key := new(DhKey)
 	key.y = k
 	key.group = dg
