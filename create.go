@@ -271,10 +271,20 @@ func MergeCreate(db *gorm.DB, onConflict clause.OnConflict, values clause.Values
 	_, _ = db.Statement.WriteString(") ON ")
 
 	var where clause.Where
-	for _, field := range db.Statement.Schema.PrimaryFields {
+	var whereFields []string
+	if len(onConflict.Columns) > 0 {
+		for _, column := range onConflict.Columns {
+			whereFields = append(whereFields, column.Name)
+		}
+	} else {
+		for _, field := range db.Statement.Schema.PrimaryFields {
+			whereFields = append(whereFields, field.DBName)
+		}
+	}
+	for _, field := range whereFields {
 		where.Exprs = append(where.Exprs, clause.Eq{
-			Column: clause.Column{Table: db.Statement.Table, Name: field.DBName},
-			Value:  clause.Column{Table: "excluded", Name: field.DBName},
+			Column: clause.Column{Table: db.Statement.Table, Name: field},
+			Value:  clause.Column{Table: "excluded", Name: field},
 		})
 	}
 	where.Build(db.Statement)
@@ -284,8 +294,8 @@ func MergeCreate(db *gorm.DB, onConflict clause.OnConflict, values clause.Values
 		var withoutOnColumns = make([]clause.Assignment, 0, len(onConflict.DoUpdates))
 	a:
 		for _, assignment := range onConflict.DoUpdates {
-			for _, field := range db.Statement.Schema.PrimaryFields {
-				if assignment.Column.Name == field.DBName {
+			for _, field := range whereFields {
+				if assignment.Column.Name == field {
 					continue a
 				}
 			}
