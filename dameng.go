@@ -1,8 +1,9 @@
 package dameng
 
 import (
-	"fmt"
+	"net"
 	"net/url"
+	"strconv"
 )
 
 // DriverName 数据库驱动、连接字符串协议名称
@@ -24,7 +25,7 @@ func BuildUrl(user, password, host string, port int, urlOptions ...map[string]st
 	dmUrl := &url.URL{
 		Scheme:   DriverName,
 		User:     url.UserPassword(user, password),
-		Host:     fmt.Sprintf("%s:%d", host, port),
+		Host:     net.JoinHostPort(host, strconv.Itoa(port)),
 		RawQuery: propQuery.Encode(),
 	}
 	return dmUrl.String()
