@@ -220,3 +220,28 @@ PORT:           5236
 PASS
 
 **************************************************************/
+
+func TestBuildUrl(t *testing.T) {
+	type args struct {
+		user       string
+		password   string
+		host       string
+		port       int
+		urlOptions []map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"escape", args{"SYSDBA", "abc!@#$%^", "127.0.0.1", 54321, []map[string]string{{"escapeProcess": "true"}}}, "dm://SYSDBA:abc%21%40%23$%25%5E@127.0.0.1:54321?escapeProcess=true"},
+		{"wrong", args{"SYSDBA", "abc!@#$%^", "127.0.0.1", 54321, []map[string]string{}}, "dm://SYSDBA:abc%21%40%23$%25%5E@127.0.0.1:54321"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BuildUrl(tt.args.user, tt.args.password, tt.args.host, tt.args.port, tt.args.urlOptions...); got != tt.want {
+				t.Errorf("BuildUrl() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
