@@ -84,7 +84,7 @@ func dm_build_1365(dm_build_1366 string, dm_build_1367 time.Duration) (net.Conn,
 }
 
 func (dm_build_1371 *dm_build_1345) dm_build_1370(dm_build_1372 dm_build_135) bool {
-	var dm_build_1373 = dm_build_1371.dm_build_1349.dmConnector.compress
+	var dm_build_1373 = dm_build_1371.dm_build_1349.compress
 	if dm_build_1372.dm_build_150() == Dm_build_42 || dm_build_1373 == Dm_build_91 {
 		return false
 	}
@@ -99,7 +99,7 @@ func (dm_build_1371 *dm_build_1345) dm_build_1370(dm_build_1372 dm_build_135) bo
 }
 
 func (dm_build_1375 *dm_build_1345) dm_build_1374(dm_build_1376 dm_build_135) bool {
-	var dm_build_1377 = dm_build_1375.dm_build_1349.dmConnector.compress
+	var dm_build_1377 = dm_build_1375.dm_build_1349.compress
 	if dm_build_1376.dm_build_150() == Dm_build_42 || dm_build_1377 == Dm_build_91 {
 		return false
 	}
@@ -129,7 +129,7 @@ func (dm_build_1379 *dm_build_1345) dm_build_1378(dm_build_1380 dm_build_135) (e
 	if dm_build_1382 > 0 {
 
 		if dm_build_1379.dm_build_1370(dm_build_1380) {
-			var retBytes, err = Compress(dm_build_1379.dm_build_1348, Dm_build_43, int(dm_build_1382), int(dm_build_1379.dm_build_1349.dmConnector.compressID))
+			var retBytes, err = Compress(dm_build_1379.dm_build_1348, Dm_build_43, int(dm_build_1382), int(dm_build_1379.dm_build_1349.compressID))
 			if err != nil {
 				return err
 			}
@@ -241,7 +241,7 @@ func (dm_build_1384 *dm_build_1345) dm_build_1383(dm_build_1385 dm_build_135) (e
 
 		dm_build_1387 = dm_build_1385.dm_build_148()
 		cBytes := dm_build_1384.dm_build_1348.Dm_build_1303(Dm_build_43+ULINT_SIZE, int(dm_build_1387-ULINT_SIZE))
-		uBytes, err := UnCompress(cBytes, int(dm_build_1384.dm_build_1349.dmConnector.compressID))
+		uBytes, err := UnCompress(cBytes, int(dm_build_1384.dm_build_1349.compressID))
 		if err != nil {
 			return err
 		}

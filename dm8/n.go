@@ -614,29 +614,19 @@ func (c *DmConnector) setAttributes(props *Properties) error {
 	c.catalog = props.GetTrimString(CatalogKey, c.catalog)
 
 	c.logLevel = ParseLogLevel(props)
-	LogLevel = c.logLevel
 	c.logDir = util.StringUtil.FormatDir(props.GetTrimString(LogDirKey, LogDirDef))
-	LogDir = c.logDir
 	c.logBufferSize = props.GetInt(LogBufferSizeKey, LogBufferSizeDef, 1, int(INT32_MAX))
-	LogBufferSize = c.logBufferSize
 	c.logFlushFreq = props.GetInt(LogFlushFreqKey, LogFlushFreqDef, 1, int(INT32_MAX))
-	LogFlushFreq = c.logFlushFreq
 	c.logFlushQueueSize = props.GetInt(LogFlusherQueueSizeKey, LogFlushQueueSizeDef, 1, int(INT32_MAX))
-	LogFlushQueueSize = c.logFlushQueueSize
 
 	c.statEnable = props.GetBool(StatEnableKey, StatEnableDef)
-	StatEnable = c.statEnable
 	c.statDir = util.StringUtil.FormatDir(props.GetTrimString(StatDirKey, StatDirDef))
-	StatDir = c.statDir
 	c.statFlushFreq = props.GetInt(StatFlushFreqKey, StatFlushFreqDef, 1, int(INT32_MAX))
-	StatFlushFreq = c.statFlushFreq
 	c.statHighFreqSqlCount = props.GetInt(StatHighFreqSqlCountKey, StatHighFreqSqlCountDef, 0, 1000)
-	StatHighFreqSqlCount = c.statHighFreqSqlCount
 	c.statSlowSqlCount = props.GetInt(StatSlowSqlCountKey, StatSlowSqlCountDef, 0, 1000)
-	StatSlowSqlCount = c.statSlowSqlCount
 	c.statSqlMaxCount = props.GetInt(StatSqlMaxCountKey, StatSqlMaxCountDef, 0, 100000)
-	StatSqlMaxCount = c.statSqlMaxCount
 	c.parseStatSqlRemoveMode(props)
+	c.publishDiagnosticConfig()
 	return nil
 }
 
@@ -901,9 +891,13 @@ func (c *DmConnector) driver() *DmDriver {
 func (c *DmConnector) connectSingle(ctx context.Context) (*DmConnection, error) {
 	var err error
 	var dc = &DmConnection{
-		closech:     make(chan struct{}),
-		dmConnector: c,
-		autoCommit:  c.autoCommit,
+		closech:       make(chan struct{}),
+		dmConnector:   c,
+		autoCommit:    c.autoCommit,
+		compress:      c.compress,
+		compressID:    c.compressID,
+		isBdtaRS:      c.isBdtaRS,
+		newClientType: c.newClientType,
 	}
 
 	dc.createFilterChain(c, nil)

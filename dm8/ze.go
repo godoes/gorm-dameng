@@ -602,19 +602,19 @@ var ConnLogger = &Logger{}
 var AccessLogger = &Logger{}
 
 func (logger Logger) IsDebugEnabled() bool {
-	return LogLevel >= LOG_DEBUG
+	return readDiagnosticConfig().LogLevel >= LOG_DEBUG
 }
 func (logger Logger) IsErrorEnabled() bool {
-	return LogLevel >= LOG_ERROR
+	return readDiagnosticConfig().LogLevel >= LOG_ERROR
 }
 func (logger Logger) IsInfoEnabled() bool {
-	return LogLevel >= LOG_INFO
+	return readDiagnosticConfig().LogLevel >= LOG_INFO
 }
 func (logger Logger) IsWarnEnabled() bool {
-	return LogLevel >= LOG_WARN
+	return readDiagnosticConfig().LogLevel >= LOG_WARN
 }
 func (logger Logger) IsSqlEnabled() bool {
-	return LogLevel >= LOG_SQL
+	return readDiagnosticConfig().LogLevel >= LOG_SQL
 }
 func (logger Logger) Debug(msg string) {
 	if logger.IsDebugEnabled() {

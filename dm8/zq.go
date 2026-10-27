@@ -2049,7 +2049,7 @@ func dm_build_459(dm_build_460 *dm_build_1345) *dm_build_456 {
 
 func (dm_build_463 *dm_build_456) dm_build_137() error {
 
-	if dm_build_463.dm_build_457.dmConnector.newClientType {
+	if dm_build_463.dm_build_457.newClientType {
 		dm_build_463.dm_build_152.dm_build_1348.Dm_build_1204(Dm_build_431, Dm_build_55)
 	} else {
 		dm_build_463.dm_build_152.dm_build_1348.Dm_build_1204(Dm_build_431, Dm_build_54)
@@ -2322,7 +2322,7 @@ func (dm_build_505 *dm_build_495) dm_build_137() error {
 		dm_build_506 += dm_build_505.dm_build_152.dm_build_1348.Dm_build_1208(dm_build_506, dm_build_505.dm_build_155.maxRows)
 	}
 
-	if dm_build_505.dm_build_152.dm_build_1349.dmConnector.isBdtaRS {
+	if dm_build_505.dm_build_152.dm_build_1349.isBdtaRS {
 		dm_build_506 += dm_build_505.dm_build_152.dm_build_1348.Dm_build_1196(dm_build_506, Dm_build_123)
 	} else {
 		dm_build_506 += dm_build_505.dm_build_152.dm_build_1348.Dm_build_1196(dm_build_506, Dm_build_122)
@@ -2688,7 +2688,7 @@ func dm_build_601(dm_build_602 string, dm_build_603 string) int {
 func (dm_build_607 *dm_build_592) dm_build_137() error {
 
 	dm_build_607.dm_build_152.dm_build_1348.Dm_build_1204(Dm_build_569, int32(0))
-	dm_build_607.dm_build_152.dm_build_1348.Dm_build_1204(Dm_build_570, int32(dm_build_607.dm_build_593.dmConnector.compress))
+	dm_build_607.dm_build_152.dm_build_1348.Dm_build_1204(Dm_build_570, int32(dm_build_607.dm_build_593.compress))
 
 	if dm_build_607.dm_build_593.dmConnector.loginEncrypt {
 		dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_572, 2)
@@ -2698,13 +2698,13 @@ func (dm_build_607 *dm_build_592) dm_build_137() error {
 		dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_571, 0)
 	}
 
-	if dm_build_607.dm_build_593.dmConnector.isBdtaRS {
+	if dm_build_607.dm_build_593.isBdtaRS {
 		dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_573, Dm_build_123)
 	} else {
 		dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_573, Dm_build_122)
 	}
 
-	dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_574, byte(dm_build_607.dm_build_593.dmConnector.compressID))
+	dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_574, byte(dm_build_607.dm_build_593.compressID))
 
 	if dm_build_607.dm_build_593.dmConnector.loginCertificate != "" {
 		dm_build_607.dm_build_152.dm_build_1348.Dm_build_1196(Dm_build_575, 1)
@@ -2767,14 +2767,14 @@ func (dm_build_613 *dm_build_592) dm_build_141() (interface{}, error) {
 		dm_build_613.dm_build_593.serverEncoding = ENCODING_GB18030
 	}
 
-	dm_build_613.dm_build_593.dmConnector.compress = int(dm_build_613.dm_build_152.dm_build_1348.Dm_build_1282(Dm_build_582))
+	dm_build_613.dm_build_593.compress = int(dm_build_613.dm_build_152.dm_build_1348.Dm_build_1282(Dm_build_582))
 	dm_build_614 := dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_584)
 	dm_build_615 := dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_585)
-	dm_build_613.dm_build_593.dmConnector.isBdtaRS = dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_586) > 0
-	dm_build_613.dm_build_593.dmConnector.compressID = int8(dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_587))
+	dm_build_613.dm_build_593.isBdtaRS = dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_586) > 0
+	dm_build_613.dm_build_593.compressID = int8(dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_587))
 
 	dm_build_613.dm_build_152.dm_build_1354 = dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_589) == 1
-	dm_build_613.dm_build_593.dmConnector.newClientType = dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_590) == 1
+	dm_build_613.dm_build_593.newClientType = dm_build_613.dm_build_152.dm_build_1348.Dm_build_1276(Dm_build_590) == 1
 	dm_build_613.dm_build_593.MsgVersion = int32(dm_build_613.dm_build_152.dm_build_1348.Dm_build_1297(Dm_build_591))
 
 	dm_build_616 := dm_build_613.dm_build_184()

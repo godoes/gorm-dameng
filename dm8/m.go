@@ -23,6 +23,12 @@ type DmConnection struct {
 	filterable
 	mu sync.Mutex
 
+	// Negotiated protocol settings belong to this connection, not its shared connector.
+	compress      int
+	compressID    int8
+	isBdtaRS      bool
+	newClientType bool
+
 	dmConnector *DmConnector
 	Access      *dm_build_1345
 	stmtMap     map[int32]*DmStatement

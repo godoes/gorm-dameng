@@ -1052,7 +1052,7 @@ type connectionStat struct {
 
 func newConnectionStat(url string) *connectionStat {
 	cs := new(connectionStat)
-	cs.maxSqlSize = StatSqlMaxCount
+	cs.maxSqlSize = readDiagnosticConfig().StatSqlMaxCount
 	cs.id = "DS" + generateId()
 	cs.url = url
 	cs.sqlStatMap = make(map[string]*sqlStat, 200)
@@ -1081,7 +1081,7 @@ func (cs *connectionStat) createSqlStat(sql string) *sqlStat {
 //goland:noinspection GoBoolExpressions
 func (cs *connectionStat) putSqlStat(sqlStat *sqlStat) bool {
 	if cs.maxSqlSize > 0 && len(cs.sqlStatMap) == cs.maxSqlSize {
-		if StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
+		if readDiagnosticConfig().StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
 			removeSqlStat := cs.eliminateSqlStat()
 			if removeSqlStat.RunningCount > 0 || removeSqlStat.getExecuteCount() > 0 {
 				atomic.AddInt64(&cs.skipSqlCount, 1)
@@ -1103,7 +1103,7 @@ func (cs *connectionStat) putSqlStat(sqlStat *sqlStat) bool {
 //goland:noinspection GoBoolExpressions
 func (cs *connectionStat) eliminateSqlStat() *sqlStat {
 	if cs.maxSqlSize > 0 && len(cs.sqlStatMap) == cs.maxSqlSize {
-		if StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
+		if readDiagnosticConfig().StatSqlRemoveMode == STAT_SQL_REMOVE_OLDEST {
 			for s, item := range cs.sqlStatMap {
 				if item != nil {
 					delete(cs.sqlStatMap, s)
@@ -1406,7 +1406,7 @@ func (sr *StatReader) readConnStat(retList []string, maxCount int) (bool, []stri
 func (sr *StatReader) readHighFreqSqlStat(retList []string, maxCount int) (bool, []string) {
 	isAppend := false
 	if sr.highFreqSqlStat == nil {
-		sr.highFreqSqlStat = sr.getHighFreqSqlStat(StatHighFreqSqlCount, -1, sqlRowField)
+		sr.highFreqSqlStat = sr.getHighFreqSqlStat(readDiagnosticConfig().StatHighFreqSqlCount, -1, sqlRowField)
 		sr.highFreqSqlStatColLens = calcColLens(sr.highFreqSqlStat, sqlRowField, COL_MAX_LEN)
 		isAppend = false
 	} else {
@@ -1464,7 +1464,7 @@ func (sr *StatReader) getHighFreqSqlStat(topCount int, sqlId int,
 func (sr *StatReader) readSlowSqlStat(retList []string, maxCount int) (bool, []string) {
 	isAppend := false
 	if sr.slowSqlStat == nil {
-		sr.slowSqlStat = sr.getSlowSqlStat(StatSlowSqlCount, -1, sqlRowField)
+		sr.slowSqlStat = sr.getSlowSqlStat(readDiagnosticConfig().StatSlowSqlCount, -1, sqlRowField)
 		sr.slowSqlStatColLens = calcColLens(sr.slowSqlStat, sqlRowField,
 			COL_MAX_LEN)
 		isAppend = false
@@ -1588,7 +1588,7 @@ func (sr *StatReader) service(url string, params *Properties) []map[string]inter
 	if strings.Index(url, URL_SQL) == 0 {
 		array := sr.getSqlStatList(params)
 		array = sr.comparatorOrderBy(array, params)
-		params.Set(PROP_NAME_FLUSH_FREQ, strconv.Itoa(StatFlushFreq))
+		params.Set(PROP_NAME_FLUSH_FREQ, strconv.Itoa(readDiagnosticConfig().StatFlushFreq))
 		return array
 	} else if strings.Index(url, URL_SQL_DETAIL) == 0 {
 		array := sr.getSqlStatDetailList(params)
@@ -1596,7 +1596,7 @@ func (sr *StatReader) service(url string, params *Properties) []map[string]inter
 	} else if strings.Index(url, URL_DATASOURCE) == 0 {
 		array := sr.getConnStatList(params)
 		array = sr.comparatorOrderBy(array, params)
-		params.Set(PROP_NAME_FLUSH_FREQ, strconv.Itoa(StatFlushFreq))
+		params.Set(PROP_NAME_FLUSH_FREQ, strconv.Itoa(readDiagnosticConfig().StatFlushFreq))
 		return array
 	} else if strings.Index(url, URL_DATASOURCE_DETAIL) == 0 {
 		array := sr.getConnStatDetailList(params)
@@ -2044,23 +2044,23 @@ func newStatFlusher() *statFlusher {
 	sf.sr = newStatReader()
 	sf.logList = make([]string, 0, 32)
 	sf.date = time.Now().Format("2006-01-02")
-	sf.flushFreq = StatFlushFreq
-	sf.filePath = StatDir
+	sf.flushFreq = readDiagnosticConfig().StatFlushFreq
+	sf.filePath = readDiagnosticConfig().StatDir
 	sf.filePrefix = "dm_go_stat"
 	sf.buffer = Dm_build_935()
 	return sf
 }
 
 func (sf *statFlusher) isConnStatEnabled() bool {
-	return StatEnable
+	return readDiagnosticConfig().StatEnable
 }
 
 func (sf *statFlusher) isSlowSqlStatEnabled() bool {
-	return StatEnable
+	return readDiagnosticConfig().StatEnable
 }
 
 func (sf *statFlusher) isHighFreqSqlStatEnabled() bool {
-	return StatEnable
+	return readDiagnosticConfig().StatEnable
 }
 
 func (sf *statFlusher) doRun() {
@@ -2078,7 +2078,7 @@ func (sf *statFlusher) doRun() {
 				}
 			}
 			if sf.isHighFreqSqlStatEnabled() {
-				sf.logList = append(sf.logList, "#top "+strconv.Itoa(StatHighFreqSqlCount)+" high freq sql stat")
+				sf.logList = append(sf.logList, "#top "+strconv.Itoa(readDiagnosticConfig().StatHighFreqSqlCount)+" high freq sql stat")
 				hasMore := true
 				for hasMore {
 					hasMore, sf.logList = sf.sr.readHighFreqSqlStat(sf.logList, READ_MAX_SIZE)
@@ -2087,7 +2087,7 @@ func (sf *statFlusher) doRun() {
 				}
 			}
 			if sf.isSlowSqlStatEnabled() {
-				sf.logList = append(sf.logList, "#top "+strconv.Itoa(StatSlowSqlCount)+" slow sql stat")
+				sf.logList = append(sf.logList, "#top "+strconv.Itoa(readDiagnosticConfig().StatSlowSqlCount)+" slow sql stat")
 				hasMore := true
 				for hasMore {
 					hasMore, sf.logList = sf.sr.readSlowSqlStat(sf.logList, READ_MAX_SIZE)
@@ -2099,7 +2099,7 @@ func (sf *statFlusher) doRun() {
 			sf.logList = append(sf.logList, util.StringUtil.LineSeparator())
 			sf.writeAndFlush(sf.logList, 0, len(sf.logList))
 			sf.logList = sf.logList[0:0]
-			time.Sleep(time.Duration(StatFlushFreq) * time.Second)
+			time.Sleep(time.Duration(readDiagnosticConfig().StatFlushFreq) * time.Second)
 		}
 	}
 }
@@ -2139,7 +2139,7 @@ func (sf *statFlusher) closeCurrentFile() {
 func (sf *statFlusher) createNewFile() *os.File {
 	sf.date = time.Now().Format("2006-01-02")
 	fileName := sf.filePrefix + "_" + sf.date + "_" + strconv.Itoa(time.Now().Nanosecond()) + ".txt"
-	sf.filePath = StatDir
+	sf.filePath = readDiagnosticConfig().StatDir
 	if len(sf.filePath) > 0 {
 		if _, err := os.Stat(sf.filePath); err != nil {
 			_ = os.MkdirAll(sf.filePath, 0755)

@@ -46,8 +46,8 @@ func (lw *logWriter) doRun() {
 
 		select {
 		case ibytes = <-lw.flushQueue:
-			if LogLevel != LOG_OFF {
-				if i == LogFlushQueueSize {
+			if readDiagnosticConfig().LogLevel != LOG_OFF {
+				if i == readDiagnosticConfig().LogFlushQueueSize {
 					lw.doFlush(lw.buffer)
 					i = 0
 				} else {
@@ -55,8 +55,8 @@ func (lw *logWriter) doRun() {
 					i++
 				}
 			}
-		case <-time.After(time.Duration(LogFlushFreq) * time.Millisecond):
-			if LogLevel != LOG_OFF && lw.buffer.Dm_build_936() > 0 {
+		case <-time.After(time.Duration(readDiagnosticConfig().LogFlushFreq) * time.Millisecond):
+			if readDiagnosticConfig().LogLevel != LOG_OFF && lw.buffer.Dm_build_936() > 0 {
 				lw.doFlush(lw.buffer)
 				i = 0
 			}
@@ -84,7 +84,7 @@ func (lw *logWriter) closeCurrentFile() {
 func (lw *logWriter) createNewFile() *os.File {
 	lw.date = time.Now().Format("2006-01-02")
 	fileName := lw.filePrefix + "_" + lw.date + "_" + strconv.Itoa(time.Now().Nanosecond()) + ".log"
-	lw.filePath = LogDir
+	lw.filePath = readDiagnosticConfig().LogDir
 	if len(lw.filePath) > 0 {
 		if _, err := os.Stat(lw.filePath); err != nil {
 			_ = os.MkdirAll(lw.filePath, 0755)
@@ -110,7 +110,7 @@ func (lw *logWriter) beforeExit() {
 	var ibytes []byte
 	for ibytes = <-lw.flushQueue; ibytes != nil; ibytes = <-lw.flushQueue {
 		lw.buffer.Dm_build_957(ibytes, 0, len(ibytes))
-		if lw.buffer.Dm_build_936() >= LogBufferSize {
+		if lw.buffer.Dm_build_936() >= readDiagnosticConfig().LogBufferSize {
 			lw.doFlush(lw.buffer)
 		}
 	}

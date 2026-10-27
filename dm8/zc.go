@@ -100,11 +100,11 @@ func runLog() {
 	_, ok := goMap["log"]
 	if !ok {
 		goMap["log"] = &logWriter{
-			flushQueue: make(chan []byte, LogFlushQueueSize),
+			flushQueue: make(chan []byte, readDiagnosticConfig().LogFlushQueueSize),
 			date:       time.Now().Format("2006-01-02"),
 			logFile:    nil,
-			flushFreq:  LogFlushFreq,
-			filePath:   LogDir,
+			flushFreq:  readDiagnosticConfig().LogFlushFreq,
+			filePath:   readDiagnosticConfig().LogDir,
 			filePrefix: "dm_go",
 			buffer:     Dm_build_935(),
 		}
@@ -127,13 +127,13 @@ func (f *filterable) createFilterChain(bc *DmConnector, props *Properties) {
 	var filters = make([]filter, 0, 5)
 
 	if bc != nil {
-		if LogLevel != LOG_OFF {
+		if readDiagnosticConfig().LogLevel != LOG_OFF {
 			filters = append(filters, &logFilter{})
 			f.logInfo = &logInfo{logRecord: new(LogRecord)}
 			runLog()
 		}
 
-		if StatEnable {
+		if readDiagnosticConfig().StatEnable {
 			filters = append(filters, &statFilter{})
 			f.statInfo = newStatInfo()
 			goStatMu.Lock()
@@ -160,7 +160,7 @@ func (f *filterable) createFilterChain(bc *DmConnector, props *Properties) {
 			runLog()
 		}
 
-		if props.GetBool("statEnable", StatEnable) {
+		if props.GetBool("statEnable", readDiagnosticConfig().StatEnable) {
 			filters = append(filters, &statFilter{})
 			f.statInfo = newStatInfo()
 			goStatMu.Lock()
